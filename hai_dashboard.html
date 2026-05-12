@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAI Surveillance WPRO &mdash; Regional Dashboard 2026</title>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/vendor/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{--bg:#EEF1F6;--sf:#FFFFFF;--sf2:#F4F5F7;--bd:#E0E4EA;--navy:#003F5C;--orange:#D85A1A;--orange-lt:#F9EDE5;--blue:#009ADE;--blue-lt:#EAF0FA;--green:#0F7A5A;--green-lt:#E4F4EE;--red:#C0392B;--red-lt:#FDEEEE;--text:#212529;--muted:#6C757D;--subtle:#ADB5BD;--font:Roboto,"Noto Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--serif:var(--font);--r:10px;--r-sm:6px;--shadow:0 2px 12px rgba(0,63,92,.07)}
+*{margin:0;padding:0;box-sizing:border-box}html{overflow-x:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.hd{background:var(--navy);padding:12px 24px;display:flex;align-items:center;justify-content:flex-start;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(27,43,69,.3);min-height:54px}
+.hd-left{display:flex;align-items:center;gap:0;min-width:0}
+.hd-logo{display:none}
+.hd-divider{display:none}
+.hd-l h1{font-family:var(--font);font-size:16px;font-weight:400;color:#fff;letter-spacing:normal;line-height:24px}
+.hd-l p{display:none}
+.hd-badges{display:none}
+.badge{font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;white-space:nowrap;letter-spacing:normal;line-height:18px}
+.badge-o{background:var(--orange);color:#fff}.badge-g{background:rgba(255,255,255,.12);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15)}
+.tab-bar{background:var(--sf);border-bottom:2px solid var(--bd);padding:0 24px;overflow-x:auto;position:sticky;top:54px;z-index:90;box-shadow:var(--shadow)}
+.tab-bar::-webkit-scrollbar{display:none}
+.tabs{display:flex;width:fit-content}
+.tab{padding:11px 22px;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;font-family:var(--font);font-size:16px;font-weight:400;color:var(--muted);white-space:nowrap;transition:all .18s;margin-bottom:-2px;line-height:24px}
+.tab:hover{color:var(--navy);background:var(--sf2)}.tab.on{color:var(--orange);border-bottom-color:var(--orange);background:var(--orange-lt)}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 22px 44px}
+.sec{display:none}.sec.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.kp{background:var(--sf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);border-top:3px solid var(--bd)}
+.kp.ko{border-top-color:var(--orange)}.kp.kb{border-top-color:var(--blue)}.kp.kg{border-top-color:var(--green)}.kp.kn{border-top-color:var(--navy)}.kp.kr{border-top-color:var(--red)}
+.kp-l{font-size:14px;color:var(--muted);font-weight:600;text-transform:none;letter-spacing:normal;line-height:21px;margin-bottom:5px}
+.kp-v{font-size:24px;font-weight:700;color:var(--navy);font-family:var(--font);line-height:30px;letter-spacing:normal}
+.kp-s{font-size:12px;color:var(--subtle);line-height:18px;margin-top:3px}
+.cd{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.cd-t{font-size:18px;font-weight:700;color:var(--navy);line-height:22.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cd-t::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--orange);flex-shrink:0}
+.fig-tag{font-size:12px;font-weight:500;background:var(--orange-lt);color:var(--orange);padding:2px 9px;border-radius:20px;border:1px solid rgba(216,90,26,.25);line-height:18px}
+.fig-sub{font-size:14px;color:var(--muted);font-style:normal;margin:-4px 0 13px;line-height:24.5px}
+.note-box{font-size:14px;color:var(--muted);line-height:21px;padding:9px 12px;background:var(--sf2);border-radius:var(--r-sm);border-left:3px solid var(--orange)}
+.radar-figure{background:#fff;padding:2px 0 0}
+.radar-figure-title{font-family:var(--font);font-size:24px;font-weight:700;color:var(--navy);text-align:center;line-height:30px;letter-spacing:normal}
+.radar-figure-sub{font-size:14px;color:var(--muted);text-align:center;margin-top:2px;line-height:24.5px}
+.radar-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:760px;margin:24px auto 20px}
+.radar-metric{background:#FBF7F1;border:1px solid #E9DED0;border-radius:6px;padding:13px 16px 12px;min-height:118px}
+.radar-metric-lbl{font-size:14px;font-weight:600;color:var(--muted);line-height:21px;margin-bottom:8px}
+.radar-metric-val{font-size:32px;font-weight:700;font-family:var(--font);line-height:38px;color:var(--navy);letter-spacing:normal}
+.radar-metric-val.green{color:#2F7D4D}.radar-metric-val.red{color:#A72D2F}
+.radar-metric-sub{font-size:14px;color:var(--text);line-height:21px;margin-top:10px}
+.radar-wrap{height:640px;max-width:940px;margin:0 auto;position:relative}
+.leg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.leg-i{display:flex;align-items:center;gap:5px;font-size:14px;color:var(--muted);font-weight:400;line-height:21px}
+.leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.hm-wrap{overflow-x:auto;border-radius:var(--r-sm);border:1px solid var(--bd)}
+.hm{width:100%;border-collapse:collapse;min-width:700px;font-family:var(--font)}
+.hm thead th{background:var(--navy);color:rgba(255,255,255,.85);padding:9px 8px;font-weight:600;text-align:center;font-size:12px;white-space:normal;line-height:18px;min-width:135px;max-width:150px}
+.hm thead th:first-child{text-align:left;min-width:185px;padding-left:12px;position:sticky;left:0;z-index:2}
+.hm td{padding:8px 6px;text-align:center;font-weight:500;border-bottom:1px solid var(--bd);font-size:14px;line-height:21px;min-width:80px}
+.hm td:first-child{text-align:left;font-weight:600;color:var(--navy);padding-left:12px;background:var(--sf);position:sticky;left:0}
+.hm tbody tr:hover td{background:rgba(27,43,69,.03)}.hm tbody tr:hover td:first-child{background:var(--sf2)}
+.hm tr.wpro-r td{background:var(--navy)!important;color:#fff!important;font-weight:700}
+.hm-overview-wrap{overflow-x:hidden}.hm.hm-overview{min-width:0;table-layout:fixed}.hm.hm-overview thead th,.hm.hm-overview td{min-width:0;font-size:11px;line-height:15px;padding:7px 5px;word-break:normal;overflow-wrap:anywhere}.hm.hm-overview thead th:first-child,.hm.hm-overview td:first-child{width:18%;min-width:0;position:static}.hm.hm-overview thead th:not(:first-child),.hm.hm-overview td:not(:first-child){width:10.25%;min-width:0;max-width:none}.hm.hm-overview td:first-child{position:static}
+.fpill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--bd);background:var(--sf);color:var(--muted);font-family:var(--font);font-size:14px;font-weight:500;line-height:21px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fpill:hover{border-color:var(--orange);color:var(--orange)}.fpill.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.sort-btn{padding:6px 13px;border-radius:var(--r-sm);border:1.5px solid var(--bd);background:var(--sf);color:var(--muted);font-family:var(--font);font-size:14px;font-weight:500;line-height:21px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.sort-btn:hover{border-color:var(--navy);color:var(--navy)}.sort-btn.on{background:var(--navy);border-color:var(--navy);color:#fff}
+#ctSearch:focus{outline:none;border-color:var(--orange)}
+.side-grid{display:grid;grid-template-columns:270px 1fr;gap:12px;align-items:start}
+.side-left{position:sticky;top:110px}
+.ct-grid{display:grid;grid-template-columns:220px 1fr;gap:12px;align-items:start}
+.ct-list{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;position:sticky;top:110px;max-height:580px}
+.ct-hdr{background:var(--navy);padding:10px 14px}
+.ct-hdr .lbl{font-size:12px;font-weight:500;text-transform:none;letter-spacing:normal;color:rgba(255,255,255,.55);line-height:18px;margin-bottom:2px}
+.ct-hdr .sub{font-size:14px;color:rgba(255,255,255,.75);line-height:21px}
+.ct-scrl{max-height:510px;overflow-y:auto}
+.ct-item{padding:9px 14px;border-bottom:1px solid var(--bd);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:all .15s;font-size:14px;line-height:21px}
+.ct-item:hover{background:var(--sf2)}.ct-item.on{background:var(--orange-lt);color:var(--orange);font-weight:700;border-left:3px solid var(--orange);padding-left:11px}
+.ct-name{color:var(--navy)}.ct-item.on .ct-name{color:var(--orange)}
+.ct-score{font-size:14px;font-weight:500;color:var(--muted);line-height:21px}.ct-item.on .ct-score{color:var(--orange)}
+.inc-pill{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;white-space:nowrap}
+.inc-HIC{background:var(--green-lt);color:var(--green)}.inc-LMIC{background:var(--blue-lt);color:var(--blue)}
+.cp-hdr{background:var(--navy);color:#fff;border-radius:var(--r);padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:16px}
+.cp-name{font-family:var(--font);font-size:20px;font-weight:700;line-height:25px;letter-spacing:normal}
+.cp-profile-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.cp-profile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.cp-profile-title{font-size:18px;font-weight:700;color:var(--navy);text-transform:none;letter-spacing:normal;line-height:22.5px}
+.cp-profile-sub{font-size:14px;color:var(--muted);line-height:21px;margin-top:2px}
+.cp-profile-stats{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.cp-stat{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--bd);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:500;color:var(--muted);line-height:18px}
+.cp-stat-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.cp-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:10px}
+.cp-domain-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cp-group{border:1px solid var(--bd);border-top:4px solid var(--sec);border-radius:var(--r-sm);background:#fff;overflow:hidden}
+.cp-group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;background:linear-gradient(180deg,#fff,var(--sf2))}
+.cp-group-title{font-size:14px;font-weight:600;color:var(--navy);text-transform:none;letter-spacing:normal;line-height:21px}
+.cp-group-score{font-family:var(--font);font-size:18px;font-weight:700;color:var(--sec);white-space:nowrap;line-height:22.5px}
+.cp-dot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:7px;padding:10px}
+.cp-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:44px;padding:5px 3px;border:1px solid var(--bd);border-radius:6px;background:var(--sf2);transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}
+.cp-dot-wrap:hover{transform:translateY(-1px);border-color:var(--orange);box-shadow:0 3px 10px rgba(27,43,69,.12)}
+.cp-dot{width:26px;height:16px;border-radius:4px;flex-shrink:0}
+.cp-dot.Y{background:var(--green)}.cp-dot.N{background:var(--red);opacity:.85}.cp-dot.DK{background:#E67E22}.cp-dot.NA{background:var(--subtle);opacity:.35}
+.cp-dot-code{font-size:9px;font-weight:800;color:var(--navy);text-align:center;line-height:1;max-width:36px;overflow:hidden}
+.cp-sections{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cs{border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--bd)}
+.cs-hdr{padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.cs-title{font-size:14px;font-weight:600;text-transform:none;letter-spacing:normal;color:#fff;line-height:21px}
+.cs-pct{font-family:var(--font);font-size:16px;font-weight:700;color:#fff;line-height:24px}
+.cs-body{padding:10px 12px;background:var(--sf)}
+.ind-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;font-size:14px;line-height:21px}
+.ind-code{font-size:12px;font-weight:600;color:var(--muted);min-width:32px;margin-top:1px;flex-shrink:0;line-height:18px}
+.ind-badge{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:1px}
+.ind-badge.Y{background:var(--green)}.ind-badge.N{background:var(--red);opacity:.85}.ind-badge.DK{background:#E67E22}.ind-badge.NA{background:var(--subtle);opacity:.4}
+.ind-lbl{color:var(--text);flex:1}
+.ind-val{font-size:12px;font-weight:500;color:var(--muted);background:var(--sf2);padding:1px 6px;border-radius:8px;margin-left:4px;line-height:18px}
+.inc-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.group-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;align-items:start;margin-bottom:14px}
+.group-grid>.cd{min-width:0}
+.group-summary{display:grid;gap:10px}
+.group-summary-card{border:1px solid var(--bd);border-left:4px solid var(--sec);border-radius:var(--r-sm);padding:12px 14px;background:var(--sf2)}
+.group-summary-lbl{font-size:14px;font-weight:600;color:var(--muted);line-height:21px;margin-bottom:3px}
+.group-summary-val{font-size:24px;font-weight:700;color:var(--navy);line-height:30px}
+.group-summary-sub{font-size:12px;color:var(--muted);line-height:18px;margin-top:2px}
+.chart-tall{height:500px;position:relative}
+.catalogue-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+.cat-card{border:1px solid var(--bd);border-left:4px solid #CBD5E1;border-radius:var(--r-sm);padding:8px 10px;background:var(--sf2)}
+.cat-card.on{border-color:rgba(216,90,26,.25);border-left-color:var(--orange);background:#fff}
+.cat-row{display:flex;align-items:flex-start;gap:8px}
+.cat-code{font-size:12px;font-weight:800;color:var(--muted);background:#fff;border:1px solid var(--bd);padding:2px 7px;border-radius:999px;line-height:18px;flex-shrink:0}
+.cat-card.on .cat-code{color:var(--orange);background:var(--orange-lt);border-color:rgba(216,90,26,.25)}
+.cat-label{font-size:14px;line-height:21px;color:var(--muted)}
+.cat-card.on .cat-label{color:var(--navy)}
+.cat-note{font-size:12px;font-weight:700;color:var(--muted);line-height:18px;margin-top:3px}
+.ik{padding:14px 16px;border-radius:var(--r-sm);border-left:4px solid}
+.ik-wpro{background:rgba(216,90,26,.08);border-color:var(--orange)}.ik-hic{background:rgba(15,122,90,.08);border-color:var(--green)}.ik-lmic{background:rgba(26,95,168,.08);border-color:var(--blue)}
+.ik-lbl{font-size:14px;font-weight:600;text-transform:none;letter-spacing:normal;line-height:21px;margin-bottom:4px}
+.ik-wpro .ik-lbl{color:var(--orange)}.ik-hic .ik-lbl{color:var(--green)}.ik-lmic .ik-lbl{color:var(--blue)}
+.ik-val{font-family:var(--font);font-size:24px;font-weight:700;color:var(--navy);letter-spacing:normal;line-height:30px}
+.ik-sub{font-size:14px;color:var(--muted);line-height:21px;margin-top:2px}
+.ind-tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:21px}
+.ind-tbl thead th{background:var(--navy);color:rgba(255,255,255,.85);padding:8px 10px;text-align:left;font-weight:600;font-size:12px;line-height:18px;position:sticky;top:0;z-index:1}
+.ind-tbl td{padding:7px 10px;border-bottom:1px solid var(--bd);color:var(--text)}
+.ind-tbl tbody tr:hover{background:var(--sf2)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:21px}
+.tbl th{background:var(--navy);color:rgba(255,255,255,.88);padding:8px 10px;text-align:left;font-weight:600;font-size:12px;line-height:18px;position:sticky;top:0;z-index:1}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--bd);color:var(--text);vertical-align:top}
+.tbl tbody tr:hover{background:var(--sf2)}
+.tbl .muted-cell{color:var(--muted);font-weight:600;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:5px 8px;display:inline-flex;line-height:18px}
+.pct-bar{display:flex;align-items:center;gap:8px}
+.pct-trk{flex:1;height:12px;background:var(--sf2);border-radius:4px;border:1px solid var(--bd);overflow:hidden;min-width:60px}
+.pct-fil{height:100%;border-radius:4px}
+.dd-sel{appearance:none;background:var(--sf);border:1.5px solid var(--bd);color:var(--text);font-family:var(--font);font-size:16px;font-weight:400;line-height:24px;padding:9px 38px 9px 14px;border-radius:var(--r-sm);cursor:pointer;box-shadow:var(--shadow);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235A6374' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;min-width:380px}
+.dd-sel:focus{outline:none;border-color:var(--orange)}
+.ig3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.ib{padding:13px 15px;border-radius:var(--r-sm);border-left:4px solid}
+.ib.b{background:var(--blue-lt);border-color:var(--blue)}.ib.s{background:var(--green-lt);border-color:var(--green)}.ib.m{background:var(--orange-lt);border-color:var(--orange)}
+.ib .lb{font-size:14px;text-transform:none;letter-spacing:normal;font-weight:600;line-height:21px;margin-bottom:4px}
+.ib.b .lb{color:var(--blue)}.ib.s .lb{color:var(--green)}.ib.m .lb{color:var(--orange)}
+.ib .vl{font-size:24px;font-weight:700;color:var(--navy);font-family:var(--font);letter-spacing:normal;line-height:30px}
+.ib .ds{font-size:14px;color:var(--muted);line-height:21px;margin-top:3px}
+.ft{text-align:center;padding:20px 0 12px;font-size:12px;color:var(--subtle);line-height:18px;border-top:1px solid var(--bd);margin-top:4px}
+
+/* Typography overrides for generated dashboard content */
+#ctSearch{font-size:16px!important;line-height:24px!important}
+#ctCount,#incGroupCount{font-size:14px!important;line-height:21px!important}
+#indTitle{font-size:18px!important;line-height:22.5px!important;font-weight:700!important;color:var(--navy)!important}
+#indTitle+div{font-size:14px!important;line-height:21px!important}
+#indGrid [style*="font-size:11px;color:var(--navy);margin-left:4px"],
+#incGroupContent [style*="font-size:11px;line-height:1.35"]{font-size:14px!important;line-height:21px!important}
+#indGrid [style*="font-size:11px;font-weight:700;text-transform:uppercase"],
+#indGrid [style*="font-size:11px;font-weight:800;text-transform:uppercase"],
+#incGroupContent [style*="font-size:11px;font-weight:800;text-transform:uppercase"]{font-size:14px!important;line-height:21px!important;text-transform:none!important;letter-spacing:normal!important;font-weight:600!important}
+#indGrid [style*="font-size:10px;font-weight:700;color:"],
+#incGroupContent [style*="font-size:10px;font-weight:800"]{font-size:12px!important;line-height:18px!important}
+/* ── Country filter bar ── */
+.ct-filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ct-filter-search{position:relative;flex:1;min-width:180px;max-width:260px}
+.ct-filter-pills{display:flex;gap:6px;flex-wrap:wrap}
+.ct-filter-sort{display:flex;gap:5px;align-items:center}
+.ct-filter-count{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.ct-legend{border-top:1px solid var(--bd);padding:8px 12px;background:var(--sf2)}
+/* Mobile: filter bar stacks, country list becomes chip grid */
+@media(max-width:768px){
+  .ct-filter-bar{flex-direction:column;align-items:stretch;gap:8px}
+  .ct-filter-search{max-width:100%}
+  .ct-filter-pills{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .ct-filter-pills::-webkit-scrollbar{display:none}
+  .ct-filter-sort{justify-content:space-between}
+  .ct-filter-count{margin-left:0}
+  .ct-hdr,.ct-legend{display:none}
+  .ct-panel{overflow:visible!important;max-height:none!important}
+  #ctSideList{display:flex!important;flex-wrap:wrap!important;gap:7px!important;padding:12px!important;max-height:none!important;overflow:visible!important}
+  .ct-item{flex-shrink:0!important;border-radius:20px!important;padding:8px 14px!important;border:1.5px solid var(--bd)!important;border-left-width:1.5px!important;white-space:nowrap!important;justify-content:center!important;font-size:13px!important;background:var(--sf)}
+  .ct-item:hover{background:var(--sf2)!important}
+  .ct-item.on{background:var(--orange)!important;border-color:var(--orange)!important;color:#fff!important;padding-left:14px!important;font-weight:700!important}
+  .ct-item .ct-name,.ct-item.on .ct-name{color:inherit!important;font-size:13px!important}
+  .ct-score{display:none!important}
+}
+@media(max-width:480px){
+  .ct-item{font-size:12px!important;padding:7px 11px!important}
+  .ct-filter-pills .fpill{font-size:12px!important}
+}
+@media(max-width:380px){
+  .ct-item{font-size:11px!important;padding:6px 10px!important}
+}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.radar-metrics{max-width:none}.cp-profile-grid,.cp-sections,.group-grid{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .kpis{grid-template-columns:repeat(2,1fr)}.radar-figure-title{font-size:20px}.radar-wrap{height:460px}
+  .ct-grid,.side-grid{grid-template-columns:1fr}.ct-list,.side-left{position:static;max-height:240px}
+  .inc-kpi-grid{grid-template-columns:1fr}.cp-domain-grid{grid-template-columns:1fr!important}
+  .chart-tall{height:340px}
+  .wrap{padding:14px 12px 32px;overflow-x:hidden}
+  .cd{padding:12px 14px;margin-bottom:10px}
+  .hd{padding:10px 14px;min-height:48px}
+  .tab-bar{padding:0 12px}
+  .kp{padding:10px 12px}
+  .cd-t{font-size:16px;line-height:22px}
+  .fig-sub,.note-box{font-size:13px;line-height:20px}
+  .fpill,.sort-btn{font-size:12px;padding:5px 10px}
+  .leg-i{font-size:12px}
+  .hm-wrap{-webkit-overflow-scrolling:touch}
+  .dd-sel{min-width:0;width:100%}
+}
+@media(max-width:480px){
+  .kpis{grid-template-columns:1fr 1fr}.kp-v{font-size:20px}
+  .tab{padding:9px 11px;font-size:11px}
+  .dd-sel{min-width:0;width:100%}
+  .radar-metrics{grid-template-columns:1fr;gap:8px;margin:12px 0}
+  .radar-metric{min-height:auto;padding:10px 12px}.radar-metric-val{font-size:26px}
+  .radar-figure-title{font-size:17px}.radar-wrap{height:340px}
+  .chart-tall{height:280px}
+  .wrap{padding:10px 10px 22px}
+  .cd{padding:10px 11px;margin-bottom:8px}
+  .hm-overview-wrap{overflow-x:auto}
+  .hm.hm-overview thead th:first-child,.hm.hm-overview td:first-child{position:sticky;left:0;z-index:2;background:var(--sf)}
+  .cd-t{font-size:14px;line-height:20px}
+  .fig-sub,.note-box{font-size:12px;line-height:18px}
+  .kp-l{font-size:12px}
+  .leg-i{font-size:11px}
+  .cp-profile-stats{justify-content:flex-start}
+  .fpill,.sort-btn{font-size:11px;padding:4px 9px}
+}
+@media(max-width:380px){
+  .radar-wrap{height:290px}.kpis{grid-template-columns:1fr}.kp-v{font-size:18px}
+  .tab{font-size:10px;padding:7px 9px}
+  .chart-tall{height:230px}
+  .cd{padding:8px 10px;margin-bottom:6px}
+  .kp-l{font-size:11px}.kp-s{font-size:11px}
+  .cd-t{font-size:13px}
+  .hm.hm-overview thead th,.hm.hm-overview td{font-size:9px;padding:5px 3px}
+}
+@supports(height:100dvh){.frame-wrap{height:100dvh}}
+</style>
+</head>
+<body>
+<div class="hd">
+  <div class="hd-left">
+    <div class="hd-l">
+      <h1>HAI Surveillance WPRO &mdash; Regional Dashboard</h1>
+    </div>
+  </div>
+  <div class="hd-badges"><span class="badge badge-o">WPRO</span><span class="badge badge-g">WHO &middot; 2026</span></div>
+</div>
+<div class="tab-bar">
+  <div class="tabs">
+    <button class="tab on" onclick="sw('ov',this)">Overview</button>
+    <button class="tab" onclick="sw('ct',this)">By Country</button>
+    <button class="tab" onclick="sw('inc',this)">By Income Level</button>
+  </div>
+</div>
+<div class="wrap">
+
+<!-- KPI FACTS (shared) -->
+<div id="kpi-facts" class="kpis">
+  <div class="kp kg"><div class="kp-l">Active IPC Programme</div><div class="kp-v">69.6%</div><div class="kp-s">16 of 23 countries</div></div>
+  <div class="kp kb"><div class="kp-l">Active HAI Surveillance</div><div class="kp-v">60.9%</div><div class="kp-s">14 of 23 countries</div></div>
+  <div class="kp ko"><div class="kp-l">Multidisciplinary Tech Group</div><div class="kp-v">52.2%</div><div class="kp-s">12 of 23 countries</div></div>
+  <div class="kp kn"><div class="kp-l">National HAI Surveillance Plan</div><div class="kp-v">39.1%</div><div class="kp-s">9 of 23 countries</div></div>
+  <div class="kp kr"><div class="kp-l">Financial Resources for HAI</div><div class="kp-v">39.1%</div><div class="kp-s">9 of 23 countries</div></div>
+</div>
+
+<!-- TAB 1: OVERVIEW -->
+<div id="s-ov" class="sec on">
+  <div class="cd">
+    <div class="cd-t">Regional Profile &mdash; 8 Pillars of HAI Surveillance Capacity <span class="fig-tag">FIG 1</span></div>
+    <div class="fig-sub">Source: Excel1.xlsx. % of countries reporting capacity per pillar across 23 WPRO countries/areas.</div>
+    <div class="radar-figure">
+      <div class="radar-figure-title">Regional profile by eight pillars of HAI surveillance capacity (2026)</div>
+      <div class="radar-figure-sub">Countries reporting capacity (%) by eight pillar</div>
+      <div class="radar-metrics">
+        <div class="radar-metric">
+          <div class="radar-metric-lbl">Highest</div>
+          <div class="radar-metric-val green">65.2%</div>
+          <div class="radar-metric-sub">Interpretation</div>
+        </div>
+        <div class="radar-metric">
+          <div class="radar-metric-lbl">Lowest</div>
+          <div class="radar-metric-val red">39.1%</div>
+          <div class="radar-metric-sub">Data QA / M&amp;E</div>
+        </div>
+        <div class="radar-metric">
+          <div class="radar-metric-lbl">Average</div>
+          <div class="radar-metric-val">54.4%</div>
+          <div class="radar-metric-sub">8 pillars</div>
+        </div>
+      </div>
+      <div class="radar-wrap"><canvas id="c1"></canvas></div>
+    </div>
+  </div>
+  <div class="cd">
+    <div class="cd-t">Heatmap &mdash; Capacity Achievement by Country &times; Pillar <span class="fig-tag">FIG 2</span></div>
+    <div class="fig-sub">Each cell = country self-reported capacity status for that pillar (8 capacity indicators).</div>
+    <div class="leg">
+      <div class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>Yes &mdash; capacity in place</div>
+      <div class="leg-i"><span class="leg-dot" style="background:#E67E22"></span>Don&rsquo;t know</div>
+      <div class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>No</div>
+    </div>
+    <div class="hm-wrap hm-overview-wrap"><table class="hm hm-overview" id="hmTbl"></table></div>
+    <div class="note-box" style="margin-top:12px"><strong>WPRO Regional row</strong> (navy) = % of countries reporting capacity per pillar.</div>
+  </div>
+</div>
+
+<!-- TAB 2: BY COUNTRY -->
+<div id="s-ct" class="sec">
+  <div class="cd" style="padding:12px 16px;margin-bottom:10px">
+    <div class="ct-filter-bar">
+      <div class="ct-filter-search">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;opacity:.4" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.8"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input id="ctSearch" type="text" placeholder="Search country..." style="width:100%;padding:7px 10px 7px 30px;border:1.5px solid var(--bd);border-radius:var(--r-sm);font-family:var(--font);font-size:12px;color:var(--navy);background:var(--sf)" oninput="filterCountries()">
+      </div>
+      <div class="ct-filter-pills">
+        <button class="fpill on" onclick="setGrpFilter('ALL',this)">All (23)</button>
+        <button class="fpill" onclick="setGrpFilter('HIC',this)">High Income (9)</button>
+        <button class="fpill" onclick="setGrpFilter('LMIC',this)">LMIC (14)</button>
+      </div>
+      <div class="ct-filter-sort">
+        <button class="sort-btn on" onclick="setSortMode('overall',this)">Score &darr;</button>
+        <button class="sort-btn" onclick="setSortMode('name',this)">A&ndash;Z</button>
+        <span class="ct-filter-count" id="ctCount">23 / 23</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="side-grid">
+    <div class="cd side-left ct-panel" style="padding:0;overflow:hidden">
+      <div class="ct-hdr">
+        <div class="lbl">Country / area</div>
+        <div class="sub" id="ctSideCount">23 shown</div>
+      </div>
+      <div id="ctSideList"></div>
+      <div class="ct-legend">
+        <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)">
+          <span style="width:10px;height:10px;border-radius:2px;background:var(--orange);display:inline-block;flex-shrink:0"></span>Selected country
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div id="indPanel" style="display:none" class="cd">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="cp-profile-title" id="indTitle">Indicator Profile</div>
+            <div class="cp-profile-sub">Full indicator-level responses across all 8 HAI surveillance domains</div>
+          </div>
+        </div>
+        <div id="indGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: BY INCOME LEVEL -->
+<div id="s-inc" class="sec">
+  <div class="cd">
+    <div class="cd-t">Income Group Summary Table</div>
+    <div class="fig-sub">Percent of countries with reported capacity by income group. Raw grouping: WPRO n=23, LMIC n=14, HIC n=9.</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <select class="dd-sel" id="incGroupSel" onchange="renderIncGroup()"></select>
+      <div id="incGroupCount" style="font-size:11px;color:var(--muted);font-weight:700"></div>
+    </div>
+    <div class="hm-wrap"><table class="tbl" id="incGroupTable"></table></div>
+  </div>
+  <div class="cd">
+    <div class="cd-t">Capacity Summary Table</div>
+    <div class="fig-sub">% of countries with capacity per pillar by income group. Source: 8 national HAI surveillance capacity indicators.</div>
+    <div class="hm-wrap"><table class="tbl" id="incCapacityTable"></table></div>
+  </div>
+</div>
+
+<div class="ft">Dashboard &middot; WHO WPRO National HAI Surveillance Assessment 2026 &middot; 23 countries/areas &middot; Sources: HAI National Workbook Apr 2026; Excel1 capacity indicators</div>
+</div>
+
+<script>
+Chart.defaults.font.family='Roboto, "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.font.size=14;
+Chart.defaults.color='#5A6374';
+Chart.register(ChartDataLabels);
+Chart.defaults.plugins.datalabels.display=false;
+
+const CDATA=[{"name":"Philippines","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"N","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"DK","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":40,"s2_pct":0,"s3_pct":25,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":8},{"name":"Micronesia, Fed. Sts.","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"Y","2.5":"Full-time","2.6":"N","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"N"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"DK","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"N","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"N","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":43,"s3_pct":0,"s4_pct":56,"s5_pct":50,"s6_pct":75,"s7_pct":60,"s8_pct":0,"overall":45},{"name":"Cambodia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Part-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"2","2.3":"Y","2.4":"Y","2.5":"Part-time","2.6":"N","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"DK","3.4":"N/A","3.5":"N","3.6":"Y","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"N","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"Y","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"Y"},"s5":{"5.1":"N","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"N","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":80,"s2_pct":57,"s3_pct":60,"s4_pct":58,"s5_pct":25,"s6_pct":50,"s7_pct":50,"s8_pct":25,"overall":53},{"name":"Lao PDR","inc":"LMIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"N","5.3":"N","5.4":"Y"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":50,"s3_pct":0,"s4_pct":0,"s5_pct":50,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":20},{"name":"Papua New Guinea","inc":"LMIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"5.0%","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":40,"s2_pct":0,"s3_pct":25,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":8},{"name":"Vanuatu","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"N","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"DK","7.2":"DK","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":40,"s2_pct":0,"s3_pct":0,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":5},{"name":"Solomon Islands","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"N","1.5":"N","1.6":"Y"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":0,"s3_pct":0,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":8},{"name":"Vietnam","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"7","2.3":"Y","2.4":"Y","2.5":"Part-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"Y","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI technical multidisciplinar","3.5":"Y","3.6":"Y","3.9":"70.6%","3.10":"57.0%","3.7":"Y","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"Y"},"s1_pct":100,"s2_pct":86,"s3_pct":100,"s4_pct":100,"s5_pct":100,"s6_pct":75,"s7_pct":100,"s8_pct":100,"overall":96},{"name":"Marshall Islands","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Part-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"4","2.3":"Y","2.4":"Y","2.5":"Voluntary","2.6":"N","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"National IPC lead","3.5":"Y","3.6":"N","3.9":"0","3.10":"4.3%","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":62,"s3_pct":86,"s4_pct":92,"s5_pct":75,"s6_pct":75,"s7_pct":83,"s8_pct":80,"overall":83},{"name":"Tonga","inc":"LMIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"DK","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"DK","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"Y","4.8a":"Manual","4.8b":"Manual","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":71,"s3_pct":50,"s4_pct":25,"s5_pct":50,"s6_pct":75,"s7_pct":67,"s8_pct":0,"overall":50},{"name":"Malaysia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"17","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"1","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Excel sheet","4.8b":"Excel sheet","4.9":"Y","4.10":"N","4.11":"Y","4.12":"Y","4.13a":"Manual","4.13b":"Manual","4.14":"N","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"Y"},"s1_pct":100,"s2_pct":71,"s3_pct":50,"s4_pct":85,"s5_pct":100,"s6_pct":100,"s7_pct":100,"s8_pct":100,"overall":88},{"name":"China","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"40","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Fully integrated","2.9a":"AMR Surveillance ;Emergency/IH","2.9b":"N/A","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI technical multidisciplinar","3.5":"Y","3.6":"Y","3.9":"1","3.10":"DK","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"Y"},"s1_pct":100,"s2_pct":100,"s3_pct":100,"s4_pct":100,"s5_pct":100,"s6_pct":100,"s7_pct":100,"s8_pct":100,"overall":100},{"name":"Indonesia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"14","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Partially integrated","2.9a":"N/A","2.9b":"AMR Surveillance","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"National IPC lead","3.5":"Y","3.6":"Y","3.9":"DK","3.10":"DK","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"Y"},"s5":{"5.1":"N","5.2":"N","5.3":"Y","5.4":"Y"},"s6":{"6.1":"N","6.2":"N","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":100,"s3_pct":100,"s4_pct":75,"s5_pct":50,"s6_pct":50,"s7_pct":60,"s8_pct":40,"overall":76},{"name":"Mongolia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"50","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"N","2.8":"Partially integrated","2.9a":"Emergency/IHR ;EWAR system","2.9b":"N/A","2.10":"Y","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"MoH, NCCD and National Inspect","3.5":"Y","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"Y","3.8":"N/A"},"s4":{"4.1":"DK","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Google sheet based","4.8b":"Google sheet based","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"Y","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":80,"s2_pct":71,"s3_pct":83,"s4_pct":67,"s5_pct":50,"s6_pct":75,"s7_pct":0,"s8_pct":25,"overall":60},{"name":"Palau","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"15","2.3":"N","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":80,"s2_pct":57,"s3_pct":25,"s4_pct":12,"s5_pct":50,"s6_pct":50,"s7_pct":20,"s8_pct":60,"overall":43},{"name":"Brunei Darussalam","inc":"HIC","s1":{"1.1":"N","1.2":"N","1.3":"N/A","1.4":"N/A","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":0,"s2_pct":0,"s3_pct":0,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":0},{"name":"Macao SAR, China","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"N/A","1.4":"N/A","1.5":"Y","1.6":"Y"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Fully integrated","2.9a":"AMR Surveillance","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"DK","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"N","4.4":"Y","4.5":"Y","4.6":"N","4.7":"Y","4.8a":"Manual","4.8b":"Manual","4.9":"N","4.10":"Y","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"Y","8.2":"N","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":33,"s3_pct":50,"s4_pct":50,"s5_pct":25,"s6_pct":50,"s7_pct":40,"s8_pct":60,"overall":50},{"name":"Hong Kong SAR, China","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"20","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Fully integrated","2.9a":"AMR Surveillance","2.9b":"N/A","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI technical multidisciplinar","3.5":"Y","3.6":"Y","3.9":"1","3.10":"1","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Manual","4.13b":"Manual","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":100,"s3_pct":100,"s4_pct":100,"s5_pct":75,"s6_pct":75,"s7_pct":83,"s8_pct":80,"overall":92},{"name":"Japan","inc":"HIC","s1":{"1.1":"N","1.2":"N","1.3":"N/A","1.4":"N/A","1.5":"N","1.6":"N"},"s2":{"2.1":"Y","2.2":"25","2.3":"N","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Partially integrated","2.9a":"AMR Surveillance","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"80.3%","3.10":"37.4%","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"N","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"N","6.4":"Y"},"s7":{"7.1":"Y","7.2":"N","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":0,"s2_pct":43,"s3_pct":25,"s4_pct":92,"s5_pct":100,"s6_pct":75,"s7_pct":83,"s8_pct":50,"overall":65},{"name":"Cook Islands","inc":"HIC","s1":{"1.1":"N","1.2":"Y","1.3":"Part-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI Surveilances captured in t","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"Y","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":0,"s3_pct":67,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":17},{"name":"New Zealand","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"12","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"N","3.4":"N/A","3.5":"Y","3.6":"Y","3.9":"DK","3.10":"DK","3.7":"N","3.8":"N"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Manual","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"Y","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":100,"s2_pct":100,"s3_pct":57,"s4_pct":100,"s5_pct":75,"s6_pct":75,"s7_pct":83,"s8_pct":50,"overall":84},{"name":"Australia","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"18","2.3":"Y","2.4":"Y","2.5":"Part-time","2.6":"N","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"1","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"Y","4.3":"Y","4.4":"N","4.5":"N","4.6":"N","4.7":"Y","4.8a":"Manual","4.8b":"N/A","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"N","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":75,"s3_pct":50,"s4_pct":33,"s5_pct":50,"s6_pct":25,"s7_pct":0,"s8_pct":40,"overall":47},{"name":"Nauru","inc":"HIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"3","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"N","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"0","3.10":"1","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"DK","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"DK","4.8a":"N/A","4.8b":"N/A","4.9":"Y","4.10":"Y","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"DK","7.2":"DK","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":43,"s3_pct":25,"s4_pct":25,"s5_pct":75,"s6_pct":50,"s7_pct":20,"s8_pct":0,"overall":37}];
+const CAP_RAW={"Philippines":[0,0,50,0,0,0,0,0],"Micronesia, Fed. Sts.":[0,100,100,100,100,100,100,0],"Cambodia":[100,100,0,0,0,100,100,100],"Lao PDR":[0,0,0,0,100,0,0,0],"Papua New Guinea":[0,0,0,0,0,0,0,0],"Vanuatu":[0,0,0,0,0,0,50,0],"Solomon Islands":[0,0,0,0,0,0,0,0],"Vietnam":[100,100,100,100,100,100,100,100],"Marshall Islands":[100,100,100,100,100,100,100,100],"Tonga":[100,50,100,0,0,100,100,0],"Malaysia":[100,100,100,0,100,100,100,100],"China":[100,100,100,100,100,100,100,100],"Indonesia":[100,100,100,0,0,0,100,0],"Mongolia":[100,50,100,0,100,100,0,0],"Palau":[0,0,0,0,100,100,100,0],"Brunei Darussalam":[0,0,0,0,0,0,0,0],"Macao SAR, China":[100,100,100,100,100,100,100,100],"Hong Kong SAR, China":[100,100,100,100,100,100,100,100],"Japan":[0,100,100,100,100,100,100,100],"Cook Islands":[100,0,0,0,0,0,0,0],"New Zealand":[100,100,100,100,100,100,100,100],"Australia":[100,0,100,0,100,100,0,0],"Nauru":[0,0,50,100,100,100,50,0]};
+const CAP_PILLARS=[
+  'Capacity to develop HAI surveillance national strategic plan',
+  'Capacity to develop standardized protocols for  HAI surveillance data collection',
+  'Capacity to integrate HAI surveillance data reported from HCFs into a centralized national database ',
+  'Capacity to check the quality of HAI surveillance data reported by HCFs ',
+  'Capacity to analyse HAI surveillance data reported by HCFs ',
+  'Capacity to interpret HAI surveillance data',
+  'Capacity to communicate/provide feedback on/report on HAI surveillance data',
+  'Capacity to conduct M&E of HAI surveillance'
+];
+const CAP_PILLARS_SHORT=['Strategic Plan','Data Collection','HCF Integration','Data QA','Data Analysis','Interpretation','Communication','M&E'];
+const CAP_REG=[56.5,47.8,56.5,39.1,60.9,65.2,56.5,39.1];
+const CAP_HIC=[55.6,44.4,55.6,55.6,77.8,77.8,55.6,44.4];
+const CAP_LMIC=[57.1,50.0,57.1,28.6,50.0,57.1,57.1,35.7];
+const KEY_INDS=[{"code":"1.1","tot":69.6,"lmic":78.6,"hic":55.6},{"code":"1.2","tot":91.3,"lmic":100.0,"hic":77.8},{"code":"1.3","tot":85.0,"lmic":85.7,"hic":83.3},{"code":"1.4","tot":85.0,"lmic":78.6,"hic":100.0},{"code":"1.5","tot":69.6,"lmic":64.3,"hic":77.8},{"code":"1.6","tot":43.5,"lmic":42.9,"hic":44.4},{"code":"2.1","tot":60.9,"lmic":57.1,"hic":66.7},{"code":"2.3","tot":85.7,"lmic":100.0,"hic":66.7},{"code":"2.4","tot":65.2,"lmic":71.4,"hic":55.6},{"code":"2.5","tot":73.3,"lmic":70.0,"hic":80.0},{"code":"2.6","tot":66.7,"lmic":70.0,"hic":60.0},{"code":"2.7","tot":52.2,"lmic":57.1,"hic":44.4},{"code":"2.8","tot":26.1,"lmic":21.4,"hic":33.3},{"code":"2.10","tot":26.1,"lmic":28.6,"hic":22.2},{"code":"2.11","tot":39.1,"lmic":28.6,"hic":55.6},{"code":"2.12","tot":88.9,"lmic":75.0,"hic":100.0},{"code":"3.1","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"3.2","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"3.3","tot":77.8,"lmic":83.3,"hic":66.7},{"code":"3.5","tot":69.6,"lmic":64.3,"hic":77.8},{"code":"3.6","tot":26.1,"lmic":28.6,"hic":22.2},{"code":"3.7","tot":87.5,"lmic":100.0,"hic":66.7},{"code":"3.8","tot":80.0,"lmic":100.0,"hic":50.0},{"code":"4.1","tot":47.8,"lmic":50.0,"hic":44.4},{"code":"4.2","tot":52.2,"lmic":50.0,"hic":55.6},{"code":"4.3","tot":83.3,"lmic":100.0,"hic":60.0},{"code":"4.4","tot":91.7,"lmic":100.0,"hic":80.0},{"code":"4.5","tot":91.7,"lmic":100.0,"hic":80.0},{"code":"4.6","tot":75.0,"lmic":85.7,"hic":60.0},{"code":"4.7","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"4.9","tot":60.9,"lmic":57.1,"hic":66.7},{"code":"4.10","tot":39.1,"lmic":28.6,"hic":55.6},{"code":"4.11","tot":34.8,"lmic":35.7,"hic":33.3},{"code":"4.12","tot":34.8,"lmic":35.7,"hic":33.3},{"code":"4.14","tot":75.0,"lmic":60.0,"hic":100.0},{"code":"4.15","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"5.1","tot":60.9,"lmic":50.0,"hic":77.8},{"code":"5.2","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"5.3","tot":21.7,"lmic":28.6,"hic":11.1},{"code":"5.4","tot":52.2,"lmic":50.0,"hic":55.6},{"code":"6.1","tot":65.2,"lmic":57.1,"hic":77.8},{"code":"6.2","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"6.3","tot":60.9,"lmic":64.3,"hic":55.6},{"code":"6.4","tot":21.7,"lmic":28.6,"hic":11.1},{"code":"7.1","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"7.2","tot":34.8,"lmic":42.9,"hic":22.2},{"code":"7.3","tot":52.2,"lmic":50.0,"hic":55.6},{"code":"7.4","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"7.5","tot":100.0,"lmic":100.0,"hic":100.0},{"code":"7.6","tot":17.4,"lmic":21.4,"hic":11.1},{"code":"8.1","tot":39.1,"lmic":35.7,"hic":44.4},{"code":"8.2","tot":39.1,"lmic":35.7,"hic":44.4},{"code":"8.3","tot":39.1,"lmic":35.7,"hic":44.4},{"code":"8.4","tot":100.0,"lmic":100.0,"hic":100.0},{"code":"8.5","tot":13.0,"lmic":21.4,"hic":0.0}];
+
+const IND_META={
+ '1.1':{g:'IPC Programme',l:'Active national IPC programme'},
+ '1.2':{g:'IPC Programme',l:'Appointed national IPC lead/focal point'},
+ '1.3':{g:'IPC Programme',l:'IPC lead working full-time'},
+ '1.4':{g:'IPC Programme',l:'Additional IPC technical support staff'},
+ '1.5':{g:'IPC Programme',l:'National IPC committee exists'},
+ '1.6':{g:'IPC Programme',l:'Dedicated IPC budget'},
+ '2.1':{g:'HAI Governance',l:'Active national HAI surveillance programme'},
+ '2.2':{g:'HAI Governance',l:'Years HAI surveillance in operation'},
+ '2.3':{g:'HAI Governance',l:'HAI surveillance part of national IPC programme'},
+ '2.4':{g:'HAI Governance',l:'National HAI surveillance lead designated'},
+ '2.5':{g:'HAI Governance',l:'HAI surveillance lead working full-time'},
+ '2.6':{g:'HAI Governance',l:'HAI surveillance lead received training'},
+ '2.7':{g:'HAI Governance',l:'Technical multidisciplinary HAI group'},
+ '2.8':{g:'HAI Governance',l:'HAI surveillance fully or partially integrated with other programmes'},
+ '2.9':{g:'HAI Governance',l:'Integrated surveillance programme / details'},
+ '2.10':{g:'HAI Governance',l:'Laws/regulations mandating HAI surveillance'},
+ '2.11':{g:'HAI Governance',l:'Financial resources for HAI surveillance'},
+ '2.12':{g:'HAI Governance',l:'HAI surveillance funding is regular'},
+ '3.1':{g:'Strategic Planning',l:'Capacity to develop HAI surveillance strategic plan'},
+ '3.2':{g:'Strategic Planning',l:'National HAI surveillance strategic plan exists'},
+ '3.3':{g:'Strategic Planning',l:'Strategic plan includes AMR/outbreak pathogens'},
+ '3.4':{g:'Strategic Planning',l:'Who developed the strategic plan'},
+ '3.5':{g:'Strategic Planning',l:'HCFs conducting HAI surveillance'},
+ '3.6':{g:'Strategic Planning',l:'Multidisciplinary group and strategic plan established (1+2)'},
+ '3.7':{g:'Strategic Planning',l:'National Strategic Plan for HAI and related AMR surveillance developed'},
+ '3.8':{g:'Strategic Planning',l:'National/subnational HAI and related AMR surveillance system established'},
+ '3.9':{g:'Strategic Planning',l:'% tertiary HCFs implementing HAI surveillance'},
+ '3.10':{g:'Strategic Planning',l:'% secondary HCFs implementing HAI surveillance'},
+ '4.1':{g:'Data Collection',l:'Capacity to develop standardized data collection protocols'},
+ '4.2':{g:'Data Collection',l:'Written standardized HAI data collection protocol'},
+ '4.3':{g:'Data Collection',l:'Protocol distributed to all HCFs'},
+ '4.4':{g:'Data Collection',l:'Protocol includes standardized data collection questionnaires'},
+ '4.5':{g:'Data Collection',l:'Protocol includes sources of data collection at HCF level'},
+ '4.6':{g:'Data Collection',l:'Protocol specifies HCF reporting mechanism'},
+ '4.7':{g:'Data Collection',l:'Mechanism for HCF to report data to national level'},
+ '4.8a':{g:'Data Collection',l:'HCF reporting method: Manual'},
+ '4.8b':{g:'Data Collection',l:'HCF reporting method: Electronic'},
+ '4.9':{g:'Data Collection',l:'HCFs currently reporting data to national level'},
+ '4.10':{g:'Data Collection',l:'Capacity to check quality of HAI surveillance data'},
+ '4.11':{g:'Data Collection',l:'Checking quality of HAI data reported by HCFs'},
+ '4.12':{g:'Data Collection',l:'Integrating all HAI surveillance data from HCFs'},
+ '4.13a':{g:'Data Collection',l:'Data integration method: Manual'},
+ '4.13b':{g:'Data Collection',l:'Data integration method: Electronic'},
+ '4.14':{g:'Data Collection',l:'Centralized database including HAI surveillance data'},
+ '4.15':{g:'Data Collection',l:'Providing training to HCFs on HAI surveillance data collection'},
+ '5.1':{g:'Data Analysis',l:'Capacity to analyze HAI surveillance data'},
+ '5.2':{g:'Data Analysis',l:'Receiving and analyzing HAI surveillance data'},
+ '5.3':{g:'Data Analysis',l:'Providing training to HCFs on data analysis methods'},
+ '5.4':{g:'Data Analysis',l:'National HAI indicators identified'},
+ '6.1':{g:'Interpretation',l:'Capacity to interpret HAI surveillance data'},
+ '6.2':{g:'Interpretation',l:'Interpreting national HAI surveillance data'},
+ '6.3':{g:'Interpretation',l:'Utilizing HAI data to advise HCFs on IPC improvements'},
+ '6.4':{g:'Interpretation',l:'Providing training to HCFs on HAI data interpretation'},
+ '7.1':{g:'Communication',l:'Capacity to communicate/feedback HAI surveillance data'},
+ '7.2':{g:'Communication',l:'National HAI surveillance communication plan exists'},
+ '7.3':{g:'Communication',l:'National and facility stakeholders identified'},
+ '7.4':{g:'Communication',l:'Developing national HAI surveillance reports'},
+ '7.5':{g:'Communication',l:'Providing feedback to HCFs on HAI surveillance findings'},
+ '7.6':{g:'Communication',l:'Providing training to HCFs on communication/feedback'},
+ '8.1':{g:'M&E',l:'Capacity to conduct M&E of HAI surveillance'},
+ '8.2':{g:'M&E',l:'Implementing monitoring of HAI surveillance system'},
+ '8.3':{g:'M&E',l:'Evaluation conducted in past 3-5 years'},
+ '8.4':{g:'M&E',l:'Utilizing HAI surveillance findings for future planning'},
+ '8.5':{g:'M&E',l:'Providing training to HCFs on M&E'}
+};
+
+const SECTION_META=[
+ {id:'s1',title:'IPC Programme',color:'#1A5FA8',keys:['1.1','1.2','1.3','1.4','1.5','1.6']},
+ {id:'s2',title:'HAI Surveillance Governance',color:'#0F7A5A',keys:['2.1','2.2','2.3','2.4','2.5','2.6','2.7','2.8','2.9a','2.9b','2.10','2.11','2.12']},
+ {id:'s3',title:'Strategic Planning',color:'#7B5EA7',keys:['3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8','3.9','3.10']},
+ {id:'s4',title:'Data Collection',color:'#2E8B57',keys:['4.1','4.2','4.3','4.4','4.5','4.6','4.7','4.8a','4.8b','4.9','4.10','4.11','4.12','4.13a','4.13b','4.14','4.15']},
+ {id:'s5',title:'Data Analysis',color:'#D85A1A',keys:['5.1','5.2','5.3','5.4']},
+ {id:'s6',title:'Interpretation',color:'#1B7A9E',keys:['6.1','6.2','6.3','6.4']},
+ {id:'s7',title:'Communication & Feedback',color:'#C0392B',keys:['7.1','7.2','7.3','7.4','7.5','7.6']},
+ {id:'s8',title:'Monitoring & Evaluation',color:'#5D5D5D',keys:['8.1','8.2','8.3','8.4','8.5']}
+];
+
+// Move KPI facts block into active tab
+function sw(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  const sec=document.getElementById('s-'+id);
+  sec.classList.add('on');
+  el.classList.add('on');
+  if(id==='ct'&&!window.ctInit){initCt();window.ctInit=true;}
+  if(id==='inc'&&!window.incInit){initInc();window.incInit=true;}
+}
+
+function animateKpiNumbers(root=document, duration=3000){
+  root.querySelectorAll('.kp-v,.radar-metric-val').forEach(node=>{
+    const finalText=node.dataset.finalValue||node.textContent.trim();
+    const match=finalText.match(/-?[\d,]+(?:\.\d+)?/);
+    if(!match)return;
+    node.dataset.finalValue=finalText;
+    const raw=match[0];
+    const target=parseFloat(raw.replace(/,/g,''));
+    const decimals=raw.includes('.')?raw.split('.')[1].length:0;
+    const prefix=finalText.slice(0,match.index);
+    const suffix=finalText.slice(match.index+raw.length);
+    const useComma=raw.includes(',');
+    const started=performance.now();
+    node.style.fontVariantNumeric='tabular-nums';
+    function format(value){
+      let out=value.toFixed(decimals);
+      if(useComma)out=out.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+      return out;
+    }
+    function tick(now){
+      const t=Math.min((now-started)/duration,1);
+      const eased=1-Math.pow(1-t,3);
+      node.textContent=prefix+format(target*eased)+suffix;
+      if(t<1)requestAnimationFrame(tick);
+      else node.textContent=finalText;
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+animateKpiNumbers(document.getElementById('kpi-facts'),3000);
+animateKpiNumbers(document.querySelector('.radar-metrics'),3000);
+
+// OVERVIEW
+function wrapLabel(label, max=24){
+  const words=label.trim().split(/\s+/);
+  const lines=[];
+  let line='';
+  words.forEach(w=>{
+    const next=line?`${line} ${w}`:w;
+    if(next.length>max && line){lines.push(line);line=w;}
+    else line=next;
+  });
+  if(line)lines.push(line);
+  return lines;
+}
+const CAP_PILLARS_RADAR=CAP_PILLARS.map(label=>wrapLabel(label,23));
+
+const _rw=window.innerWidth;
+const _rSm=_rw<=480,_rTiny=_rw<=380;
+const _rPad=_rTiny?14:_rSm?42:86;
+const _rPLSize=_rTiny?9:_rSm?11:15;
+const _rPLPad=_rTiny?10:_rSm?14:26;
+const _rDLSize=_rTiny?9:_rSm?11:14;
+new Chart(document.getElementById('c1'),{
+  type:'radar',
+  data:{labels:CAP_PILLARS_RADAR,datasets:[
+    {
+      label:'WPRO Regional',
+      data:CAP_REG,
+      backgroundColor:'rgba(47,125,77,.13)',borderColor:'#2F7D4D',borderWidth:2.5,
+      pointBackgroundColor:'#2F7D4D',pointBorderColor:'#fff',pointBorderWidth:1.5,pointRadius:3.5,pointHoverRadius:7,
+      pointHitRadius:14
+    }
+  ]},
+  options:{
+    maintainAspectRatio:false,
+    animation:{duration:1400,easing:'easeOutQuart'},
+    animations:{radius:{duration:900,easing:'easeOutBack',from:0}},
+    layout:{padding:{top:_rTiny?18:44,bottom:20,left:_rPad,right:_rPad}},
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{
+        title:items=>CAP_PILLARS[items[0].dataIndex],
+        label:ctx=>`${ctx.parsed.r.toFixed(1)}% of countries`
+      }},
+      datalabels:{display:true,color:'#111827',
+        font:{size:_rDLSize,weight:'800'},formatter:v=>v.toFixed(1)+'%',
+        anchor:'end',align:'end',offset:5,clip:false}
+    },
+    scales:{r:{beginAtZero:true,max:100,
+      ticks:{stepSize:20,callback:v=>v+'%',color:'#B05A28',font:{size:11,weight:'700'},backdropColor:'rgba(255,255,255,.72)',showLabelBackdrop:true},
+      grid:{circular:false,color:ctx=>ctx.index===5?'rgba(169,75,29,.68)':'rgba(216,90,26,.42)',lineWidth:ctx=>ctx.index===5?1.3:1},
+      angleLines:{color:'rgba(169,75,29,.46)',lineWidth:1},
+      pointLabels:{font:{size:_rPLSize,weight:'750'},color:'#111827',padding:_rPLPad,centerPointLabels:true}}}
+  }
+});
+
+(function(){
+  const tbl=document.getElementById('hmTbl');
+  const colFor=v=>v>=100?'#0F7A5A':v>=50?'#E67E22':'#C0392B';
+  const txtFor=v=>v>=100?'Yes':v>=50?'DK':'No';
+  let h='<thead><tr><th>Country / Area</th>';
+  CAP_PILLARS.forEach(p=>h+=`<th>${p}</th>`);
+  h+='</tr></thead><tbody>';
+  CDATA.forEach(c=>{
+    const cap=CAP_RAW[c.name]||Array(8).fill(0);
+    h+=`<tr><td>${c.name}</td>`;
+    cap.forEach(v=>h+=`<td style="background:${colFor(v)};color:#fff">${txtFor(v)}</td>`);
+    h+='</tr>';
+  });
+  h+='<tr class="wpro-r"><td>WPRO Regional</td>';
+  CAP_REG.forEach(v=>h+=`<td>${v.toFixed(1)}%</td>`);
+  h+='</tr></tbody>';
+  tbl.innerHTML=h;
+})();
+
+// BY COUNTRY
+let ctSel='',ctGrp='ALL';
+let ctSort='overall';
+
+function initCt(){
+  renderCtList();
+  const def=CDATA.find(c=>c.name==='Vietnam')||CDATA[0];
+  selectCt(def.name);
+}
+
+function getCtList(){
+  const q=(document.getElementById('ctSearch')||{value:''}).value.toLowerCase().trim();
+  let list=ctGrp==='ALL'?[...CDATA]:CDATA.filter(c=>c.inc===ctGrp);
+  if(q)list=list.filter(c=>c.name.toLowerCase().includes(q));
+  if(ctSort==='overall')list.sort((a,b)=>b.overall-a.overall||a.name.localeCompare(b.name));
+  else list.sort((a,b)=>a.name.localeCompare(b.name));
+  return list;
+}
+
+function renderCtList(){
+  const list=getCtList();
+  const cnt=document.getElementById('ctCount');
+  const sideCnt=document.getElementById('ctSideCount');
+  const el=document.getElementById('ctSideList');
+  if(cnt)cnt.textContent=`${list.length} / ${CDATA.length}`;
+  if(sideCnt)sideCnt.textContent=`${list.length} shown`;
+  if(!el)return;
+  el.innerHTML=list.map(c=>{
+    const isSel=c.name===ctSel;
+    return `<div onclick='selectCt(${JSON.stringify(c.name)})'
+      class="ct-item${isSel?' on':''}"
+      onmouseover="if(!this.dataset.sel)this.style.background='var(--sf2)'"
+      onmouseout="if(!this.dataset.sel)this.style.background=''" ${isSel?'data-sel="1"':''}>
+      <span class="ct-name">${c.name}</span>
+    </div>`;
+  }).join('');
+}
+
+function setGrpFilter(g,el){
+  ctGrp=g;
+  document.querySelectorAll('#s-ct .fpill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  renderCtList();
+}
+function setGrp(g,el){setGrpFilter(g,el);}
+function setSortMode(mode,el){
+  ctSort=mode;
+  document.querySelectorAll('#s-ct .sort-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderCtList();
+}
+function filterCountries(){renderCtList();}
+
+function selectCt(name){
+  if(ctSel===name){ctSel='';renderCtList();clearProfiles();return;}
+  ctSel=name;
+  const c=CDATA.find(x=>x.name===name);
+  if(!c)return;
+  renderCtList();
+  renderIndicatorProfile(c);
+}
+
+function renderIndicatorProfile(c){
+  const isNA=v=>v===undefined||v===null||v===''||v==='N/A';
+  const classify=v=>v==='Y'?'yes':v==='N'?'no':(v==='DK'||v==="Don't know")?'dk':isNA(v)?'na':'info';
+  const COL={yes:'#0F7A5A',info:'#0F7A5A',no:'#C0392B',dk:'#8C96A8',na:'#CBD5E1'};
+  const BG={yes:'rgba(15,122,90,.07)',info:'rgba(15,122,90,.07)',no:'rgba(192,57,43,.06)',dk:'rgba(140,150,168,.05)',na:'rgba(203,213,225,.18)'};
+  const IC={yes:'Y',info:'i',no:'N',dk:'?',na:'-'};
+  const LBL={yes:'Yes',info:'Information available',no:'No',dk:"Don't know / no information",na:'N/A or no information'};
+  const allResponses=[];
+  const methodValue=(vals)=>{
+    const clean=vals.filter(v=>v&&v!=='N/A').map(v=>String(v).trim()).filter(Boolean);
+    const unique=[...new Map(clean.map(v=>[v.toLowerCase(),v])).values()];
+    return unique.length?unique.join(' / '):'N/A';
+  };
+  const displayVals=(sm)=>{
+    if(sm.id==='s2'){
+      const raw=c.s2||{};
+      const combined={'2.9':methodValue([raw['2.9a'],raw['2.9b']])};
+      return sm.keys.flatMap(k=>{
+        if(k==='2.9a')return[{key:'2.9',raw:combined['2.9'],label:'Integrated surveillance programme / details'}];
+        if(k==='2.9b')return[];
+        return{key:k,raw:raw[k]||'N/A'};
+      });
+    }
+    if(sm.id!=='s4')return sm.keys.map(k=>({key:k,raw:c[sm.id]?c[sm.id][k]:'N/A'}));
+    const raw=c.s4||{};
+    const combined={
+      '4.8':methodValue([raw['4.8a'],raw['4.8b']]),
+      '4.13':methodValue([raw['4.13a'],raw['4.13b']])
+    };
+    return sm.keys.flatMap(k=>{
+      if(k==='4.8a')return[{key:'4.8',raw:combined['4.8'],label:'HCF reporting method:'}];
+      if(k==='4.13a')return[{key:'4.13',raw:combined['4.13'],label:'Data integration method:'}];
+      if(k==='4.8b'||k==='4.13b')return[];
+      return{key:k,raw:raw[k]||'N/A'};
+    });
+  };
+
+  const summaryRows=SECTION_META.map((sm,i)=>{
+    const items=displayVals(sm).map(v=>({key:v.key,cls:classify(v.raw),raw:v.raw,label:v.label||(IND_META[v.key]?IND_META[v.key].l:v.key)}));
+    allResponses.push(...items.map(v=>v.cls));
+    const y=items.filter(v=>v.cls==='yes'||v.cls==='info').length;
+    const tot=items.length;
+    const pct=c[sm.id+'_pct']||0;
+    const barCol=pct>=60?'#0F7A5A':pct>=30?'#D85A1A':'#C0392B';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--bd)">
+      <div style="width:36px;font-size:10px;font-weight:700;color:var(--navy);flex-shrink:0;text-align:right">S${i+1}</div>
+      <div style="display:flex;gap:4px;flex:1;flex-wrap:wrap">
+        ${items.map(v=>`<div title="${v.key}: ${v.label} - ${LBL[v.cls]}${v.cls==='info'?` (${v.raw})`:''}" style="min-width:28px;height:18px;border-radius:4px;background:${COL[v.cls]};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;line-height:1;padding:0 4px">${v.key}</div>`).join('')}
+      </div>
+      <div style="font-size:11px;font-weight:700;color:${barCol};width:44px;text-align:right;flex-shrink:0">${y}/${tot}</div>
+    </div>`;
+  }).join('');
+
+  const profileCounts={
+    yes:allResponses.filter(v=>v==='yes').length,
+    info:allResponses.filter(v=>v==='info').length,
+    no:allResponses.filter(v=>v==='no').length,
+    dk:allResponses.filter(v=>v==='dk').length,
+    na:allResponses.filter(v=>v==='na').length
+  };
+
+  const domainCards=SECTION_META.map((sm,idx)=>{
+    const vals=displayVals(sm);
+    const pct=c[sm.id+'_pct']||0;
+    const yCount=vals.filter(v=>classify(v.raw)==='yes'||classify(v.raw)==='info').length;
+    const nCount=vals.filter(v=>classify(v.raw)==='no').length;
+    const dkCount=vals.filter(v=>classify(v.raw)==='dk').length;
+    const naCount=vals.filter(v=>classify(v.raw)==='na').length;
+    const headCol=pct>=60?'#0F7A5A':pct>=30?'#D85A1A':'#C0392B';
+    const rows=vals.map(v=>{
+      const cls=classify(v.raw);
+      const meta=IND_META[v.key];
+      const extra=cls==='info'?` <span style="font-size:10px;font-weight:700;color:#0F7A5A;background:#fff;border:1px solid rgba(15,122,90,.25);padding:1px 6px;border-radius:8px;margin-left:4px">${v.raw}</span>`:'';
+      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;border-radius:5px;background:${BG[cls]};margin-bottom:2px">
+        <div style="width:20px;height:20px;border-radius:4px;background:${COL[cls]};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px">${IC[cls]}</div>
+        <div style="flex:1;min-width:0">
+          <span style="font-size:10px;font-weight:700;color:${COL[cls]}">${v.key}</span>
+          <span style="font-size:11px;color:var(--navy);margin-left:4px;line-height:1.4">${v.label||(meta?meta.l:v.key)}${extra}</span>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)">
+      <div style="background:var(--navy);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:${headCol};color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">S${idx+1}</span>
+          <span style="font-size:12px;font-weight:700;color:#fff">${sm.title}</span>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--sf2)">
+        <div style="height:100%;background:${headCol};width:${pct}%;transition:width .6s"></div>
+      </div>
+      <div style="padding:10px 12px">${rows}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('indPanel').style.display='block';
+  document.getElementById('indTitle').textContent=`${c.name} - Indicator Profile`;
+  document.getElementById('indGrid').innerHTML=`
+    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:3px">HAI Domain Overview</div>
+          <div style="font-size:12px;color:var(--navy);font-weight:700">${c.name} <span class="inc-pill inc-${c.inc}" style="font-size:10px;padding:2px 8px">${c.inc}</span></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <div class="cp-stat"><span class="cp-stat-dot" style="background:#0F7A5A"></span>Yes/info</div>
+          <div class="cp-stat"><span class="cp-stat-dot" style="background:#C0392B"></span>No</div>
+          <div class="cp-stat"><span class="cp-stat-dot" style="background:#8C96A8"></span>Don't know/no info</div>
+          <div class="cp-stat"><span class="cp-stat-dot" style="background:#CBD5E1"></span>N/A</div>
+        </div>
+      </div>
+      ${summaryRows}
+    </div>
+    <div class="cp-domain-grid">
+      ${domainCards}
+    </div>`;
+}
+
+function clearProfiles(){
+  document.getElementById('indPanel').style.display='none';
+  document.getElementById('indGrid').innerHTML='';
+}
+
+// BY INCOME LEVEL
+function pctBar(v,col){return `<div class="pct-bar"><div class="pct-trk"><div class="pct-fil" style="width:${v}%;background:${col}"></div></div><span style="font-size:11px;font-weight:700;color:${col};min-width:40px;text-align:right">${v.toFixed(1)}%</span></div>`;}
+function esc(s){return String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function initInc(){
+  const sel=document.getElementById('incGroupSel');
+  const groups=getIncGroups();
+  sel.innerHTML=groups.map(g=>`<option value="${g.key}">${g.title} (${g.range})</option>`).join('');
+  renderIncGroup();
+  renderIncCapacityTable();
+}
+
+function getIncGroups(){
+  const byGroup={};
+  const cmpCode=(a,b)=>{
+    const pa=String(a).match(/\d+|[a-z]+/gi)||[];
+    const pb=String(b).match(/\d+|[a-z]+/gi)||[];
+    for(let i=0;i<Math.max(pa.length,pb.length);i++){
+      if(pa[i]===undefined)return-1;
+      if(pb[i]===undefined)return 1;
+      const na=Number(pa[i]),nb=Number(pb[i]);
+      const diff=Number.isFinite(na)&&Number.isFinite(nb)?na-nb:String(pa[i]).localeCompare(String(pb[i]));
+      if(diff)return diff;
+    }
+    return 0;
+  };
+  KEY_INDS.forEach(i=>{
+    const meta=IND_META[i.code]||{g:'Other',l:i.code};
+    (byGroup[meta.g]=byGroup[meta.g]||[]).push(i);
+  });
+  return Object.entries(byGroup).map(([title,items])=>{
+    const allCodes=Object.keys(IND_META).filter(c=>IND_META[c].g===title).sort(cmpCode);
+    const numericCodes=items.map(i=>i.code);
+    return {
+      key:title,
+      title,
+      items:items.sort((a,b)=>cmpCode(a.code,b.code)),
+      allCodes,
+      numericCodes,
+      range:allCodes.length?`${allCodes[0]}-${allCodes[allCodes.length-1]}`:`${numericCodes[0]}-${numericCodes[numericCodes.length-1]}`
+    };
+  });
+}
+
+function renderIncGroup(){
+  const groups=getIncGroups();
+  const sel=document.getElementById('incGroupSel');
+  const key=sel.value||groups[0].key;
+  const group=groups.find(g=>g.key===key)||groups[0];
+  document.getElementById('incGroupCount').textContent=`${group.items.length} charted indicators · ${group.allCodes.length} total indicators`;
+  const itemByCode=Object.fromEntries(group.items.map(i=>[i.code,i]));
+  document.getElementById('incGroupTable').innerHTML=`<thead><tr><th>Code</th><th>Indicator</th><th>WPRO</th><th>LMIC</th><th>HIC</th></tr></thead><tbody>${group.allCodes.map(code=>{
+    const item=itemByCode[code];
+    const meta=IND_META[code]||{l:code};
+    const cell=(v,col)=>item?pctBar(v,col):'<span class="muted-cell">Not charted</span>';
+    return `<tr>
+      <td><strong>${esc(code)}</strong></td>
+      <td>${esc(meta.l)}${item?'':'<div style="font-size:12px;color:var(--muted);line-height:18px">Categorical / not percentage-coded</div>'}</td>
+      <td>${cell(item?.tot,'#D85A1A')}</td>
+      <td>${cell(item?.lmic,'#1A5FA8')}</td>
+      <td>${cell(item?.hic,'#0F7A5A')}</td>
+    </tr>`;
+  }).join('')}</tbody>`;
+}
+
+function renderIncCapacityTable(){
+  document.getElementById('incCapacityTable').innerHTML=`<thead><tr><th>Code</th><th>Capacity pillar</th><th>WPRO</th><th>LMIC</th><th>HIC</th></tr></thead><tbody>${CAP_PILLARS_SHORT.map((label,i)=>`
+    <tr>
+      <td><strong>${i+1}</strong></td>
+      <td>${esc(label)}<div style="font-size:12px;color:var(--muted);line-height:18px">${esc(CAP_PILLARS[i]||label)}</div></td>
+      <td>${pctBar(CAP_REG[i],'#D85A1A')}</td>
+      <td>${pctBar(CAP_LMIC[i],'#1A5FA8')}</td>
+      <td>${pctBar(CAP_HIC[i],'#0F7A5A')}</td>
+    </tr>`).join('')}</tbody>`;
+}
+</script>
+</body>
+</html>
+

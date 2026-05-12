@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAI Surveillance WPRO &mdash; Facility-Level Dashboard 2026</title>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/vendor/chartjs-plugin-datalabels.min.js"></script>
+<script src="./hai_facility_data.js"></script>
+<style>
+:root{--bg:#EEF1F6;--sf:#FFFFFF;--sf2:#F4F5F7;--bd:#E0E4EA;--navy:#003F5C;--orange:#D85A1A;--orange-lt:#F9EDE5;--blue:#009ADE;--blue-lt:#EAF0FA;--green:#0F7A5A;--green-lt:#E4F4EE;--red:#C0392B;--red-lt:#FDEEEE;--amber:#D8941A;--amber-lt:#FFF4D9;--text:#212529;--muted:#6C757D;--subtle:#ADB5BD;--font:Roboto,"Noto Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--r:10px;--r-sm:6px;--shadow:0 2px 12px rgba(0,63,92,.07)}
+*{margin:0;padding:0;box-sizing:border-box}html{overflow-x:hidden}
+canvas{max-width:100%!important}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.hd{background:var(--navy);padding:12px 24px;display:flex;align-items:center;justify-content:flex-start;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(27,43,69,.3);min-height:54px}
+.hd-left{display:flex;align-items:center;gap:0;min-width:0}
+.hd-logo{display:none}
+.hd-divider{display:none}
+.hd-l h1{font-size:16px;font-weight:400;color:#fff;letter-spacing:normal;line-height:24px}
+.hd-l p{display:none}
+.hd-badges{display:none}.badge{font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;white-space:nowrap;letter-spacing:normal;line-height:18px}
+.badge-o{background:var(--orange);color:#fff}.badge-g{background:rgba(255,255,255,.12);color:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.15)}
+.tab-bar{background:var(--sf);border-bottom:2px solid var(--bd);padding:0 24px;overflow-x:auto;position:sticky;top:54px;z-index:90;box-shadow:var(--shadow)}
+.tab-bar::-webkit-scrollbar{display:none}.tabs{display:flex;width:fit-content}
+.tab{padding:11px 22px;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;font-family:var(--font);font-size:16px;font-weight:400;color:var(--muted);white-space:nowrap;transition:all .18s;margin-bottom:-2px;line-height:24px}
+.tab:hover{color:var(--navy);background:var(--sf2)}.tab.on{color:var(--orange);border-bottom-color:var(--orange);background:var(--orange-lt)}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 22px 44px}.sec{display:none}.sec.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.kp{background:var(--sf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);border-top:3px solid var(--bd);min-height:112px}
+.kp.ko{border-top-color:var(--orange)}.kp.kb{border-top-color:var(--blue)}.kp.kg{border-top-color:var(--green)}.kp.kn{border-top-color:var(--navy)}.kp.kr{border-top-color:var(--red)}
+.kp-l{font-size:14px;color:var(--muted);font-weight:600;text-transform:none;letter-spacing:normal;line-height:21px;margin-bottom:5px}
+.kp-v{font-size:24px;font-weight:700;color:var(--navy);font-family:var(--font);line-height:30px;letter-spacing:normal}.kp-s{font-size:12px;color:var(--subtle);line-height:18px;margin-top:3px}
+.cd{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.cd-t{font-size:18px;font-weight:700;color:var(--navy);line-height:22.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cd-t::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--orange);flex-shrink:0}.fig-tag{font-size:12px;font-weight:500;background:var(--orange-lt);color:var(--orange);padding:2px 9px;border-radius:20px;border:1px solid rgba(216,90,26,.25);line-height:18px}
+.fig-sub{font-size:14px;color:var(--muted);font-style:normal;margin:-4px 0 13px;line-height:24.5px}.note-box{font-size:14px;color:var(--muted);line-height:21px;padding:9px 12px;background:var(--sf2);border-radius:var(--r-sm);border-left:3px solid var(--orange)}
+.radar-figure{background:#fff;padding:2px 0 0}.radar-figure-title{font-size:24px;font-weight:700;color:var(--navy);text-align:center;line-height:30px;letter-spacing:normal}
+.radar-figure-sub{font-size:14px;color:var(--muted);text-align:center;margin-top:2px;line-height:24.5px}.radar-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:760px;margin:24px auto 20px}
+.radar-metric{background:#FBF7F1;border:1px solid #E9DED0;border-radius:6px;padding:13px 16px 12px;min-height:118px}.radar-metric-lbl{font-size:14px;font-weight:600;color:var(--muted);line-height:21px;margin-bottom:8px}
+.radar-metric-val{font-size:32px;font-weight:700;font-family:var(--font);line-height:38px;color:var(--navy);letter-spacing:normal}.radar-metric-val.green{color:#2F7D4D}.radar-metric-val.red{color:#A72D2F}
+.radar-metric-sub{font-size:14px;color:var(--text);line-height:21px;margin-top:10px}.radar-wrap{height:640px;max-width:940px;margin:0 auto;position:relative}
+.chart-box{height:540px;position:relative}.chart-box.short{height:360px}.chart-box.tall{height:680px}
+.hm-wrap{overflow-x:auto;border-radius:var(--r-sm);border:1px solid var(--bd);max-width:100%;min-width:0}.hm{width:100%;border-collapse:collapse;min-width:900px;font-family:var(--font)}
+.hm th{background:var(--navy);color:rgba(255,255,255,.88);padding:9px 8px;font-weight:600;text-align:center;font-size:12px;white-space:normal;line-height:18px;min-width:120px}
+.hm th:first-child{text-align:left;min-width:190px;padding-left:12px;position:sticky;left:0;z-index:2}.hm td{padding:8px 6px;text-align:center;font-weight:600;border-bottom:1px solid var(--bd);font-size:14px;line-height:21px}
+.hm td:first-child{text-align:left;color:var(--navy);padding-left:12px;background:var(--sf);position:sticky;left:0}.hm tbody tr:hover td{background:rgba(27,43,69,.03)}.hm tbody tr:hover td:first-child{background:var(--sf2)}
+.hm .wpro-r td{background:var(--navy)!important;color:#fff!important}.hm .wpro-r td:first-child{background:var(--navy)!important;color:#fff!important}
+.pct-good{background:var(--green-lt);color:var(--green)}.pct-mid{background:var(--orange-lt);color:var(--orange)}.pct-warn{background:rgba(100,116,139,.12);color:#64748B}.pct-bad{background:var(--red-lt);color:var(--red)}.pct-na{background:var(--sf2);color:var(--subtle)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.dd-sel,.search-inp{appearance:none;background:var(--sf);border:1.5px solid var(--bd);color:var(--text);font-family:var(--font);font-size:16px;font-weight:400;line-height:24px;padding:9px 38px 9px 14px;border-radius:var(--r-sm);cursor:pointer;box-shadow:var(--shadow);min-width:280px}
+.search-inp{cursor:text;padding-right:14px;min-width:240px}.dd-sel:focus,.search-inp:focus{outline:none;border-color:var(--orange)}
+.ct-grid{display:grid;grid-template-columns:270px minmax(0,1fr);gap:12px;align-items:start;min-width:0}.ct-grid>main{min-width:0}.ct-list{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;position:sticky;top:110px;height:calc(100vh - 125px);max-height:none;display:flex;flex-direction:column}
+.ct-hdr{background:var(--navy);padding:10px 14px}.ct-hdr .lbl{font-size:12px;font-weight:500;text-transform:none;letter-spacing:normal;color:rgba(255,255,255,.58);line-height:18px;margin-bottom:2px}
+.ct-hdr .sub{font-size:14px;color:rgba(255,255,255,.78);line-height:21px}.ct-scrl{flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}.ct-item{padding:9px 14px;border-bottom:1px solid var(--bd);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:all .15s;font-size:14px;line-height:21px}
+.ct-item:hover{background:var(--sf2)}.ct-item.on{background:var(--orange-lt);color:var(--orange);font-weight:700;border-left:3px solid var(--orange);padding-left:11px}.ct-name{color:var(--navy)}.ct-item.on .ct-name{color:var(--orange)}
+.ct-score{font-size:14px;font-weight:500;color:var(--muted);line-height:21px}.ct-item.on .ct-score{color:var(--orange)}
+.fig-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:14px;min-width:0}.fig-grid>.cd{min-width:0}.profile-chart-title{font-size:18px;font-weight:700;color:var(--navy);line-height:22.5px;margin-bottom:4px}.profile-chart-sub{font-size:14px;color:var(--muted);line-height:21px;margin-bottom:10px}.country-chart{position:relative;height:380px;min-width:0}.country-radar-chart{height:500px}.country-bar-chart{height:500px}
+.leg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}.leg-i{display:flex;align-items:center;gap:5px;font-size:14px;color:var(--muted);font-weight:400;line-height:21px}.leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.hm tr.sel-r td{outline:2px solid rgba(216,90,26,.24);outline-offset:-2px;background:rgba(216,90,26,.08)!important}.hm tr.sel-r td:first-child{color:var(--orange);font-weight:800;background:var(--orange-lt)!important}
+.hm-overview-wrap{overflow-x:hidden}.hm.hm-overview{min-width:0;table-layout:fixed}.hm.hm-overview th,.hm.hm-overview td{font-size:11px;line-height:15px;padding:7px 5px;font-weight:600;min-width:0;word-break:normal;overflow-wrap:anywhere}.hm.hm-overview th:first-child,.hm.hm-overview td:first-child{width:16%;min-width:0;position:static}.hm.hm-overview th:nth-child(2),.hm.hm-overview td:nth-child(2){width:7%;min-width:0;text-align:center}.hm.hm-overview th:not(:first-child):not(:nth-child(2)),.hm.hm-overview td:not(:first-child):not(:nth-child(2)){width:9.625%;min-width:0}.hm.hm-overview td:first-child{position:static}
+.dom-overview{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.dom-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}.dom-kicker{font-size:14px;font-weight:700;color:var(--muted);line-height:21px}.dom-country{font-size:16px;font-weight:800;color:var(--navy);line-height:24px}
+.dom-row{display:grid;grid-template-columns:46px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}.dom-row:last-of-type{border-bottom:0}.dom-sec{font-size:14px;font-weight:900;color:var(--navy);text-align:right}.dom-chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.dom-chip{min-width:33px;height:24px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;padding:0 8px;font-size:11px;font-weight:900;color:#fff;box-shadow:inset 0 -1px 0 rgba(0,0,0,.08)}.dom-chip.high{background:var(--green)}.dom-chip.mid{background:var(--orange)}.dom-chip.low{background:#64748B}.dom-chip.verylow{background:var(--red)}.dom-chip.na{background:#CBD5E1;color:#fff}
+.cp-hdr{background:var(--navy);color:#fff;border-radius:var(--r);padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cp-name{font-size:20px;font-weight:700;line-height:25px;letter-spacing:normal}.cp-sub{font-size:14px;color:rgba(255,255,255,.75);line-height:21px;margin-top:2px}.inc-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.13);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.mini-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}.mini{padding:13px 15px;border-radius:var(--r-sm);border-left:4px solid var(--bd);background:var(--sf);box-shadow:var(--shadow)}
+.mini.b{background:var(--blue-lt);border-color:var(--blue)}.mini.g{background:var(--green-lt);border-color:var(--green)}.mini.o{background:var(--orange-lt);border-color:var(--orange)}.mini.n{background:#EDF4F8;border-color:var(--navy)}
+.mini .lb{font-size:14px;font-weight:600;line-height:21px;margin-bottom:4px;color:var(--muted)}.mini .vl{font-size:24px;font-weight:700;color:var(--navy);line-height:30px}.mini .ds{font-size:12px;color:var(--muted);line-height:18px;margin-top:3px}
+.pillar-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.pillar{border:1px solid var(--bd);border-top:4px solid var(--sec);border-radius:var(--r-sm);background:#fff;overflow:hidden;padding:10px 11px;min-height:138px}
+.pillar-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.pillar-code{font-size:12px;font-weight:800;color:var(--sec);line-height:18px}.pillar-pct{font-size:20px;font-weight:800;color:var(--sec);line-height:24px}.pillar-label{font-size:14px;font-weight:600;color:var(--navy);line-height:20px;margin-top:8px}.pillar-raw{font-size:12px;color:var(--muted);line-height:18px;margin-top:4px}
+.bar-track{height:9px;border-radius:5px;background:var(--sf2);border:1px solid var(--bd);overflow:hidden;margin-top:10px}.bar-fill{height:100%;border-radius:5px;background:var(--sec)}
+.cp-profile-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}.cp-profile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.cp-profile-title{font-size:18px;font-weight:700;color:var(--navy);line-height:22.5px}.cp-profile-sub{font-size:14px;color:var(--muted);line-height:21px;margin-top:2px}
+.cp-stat{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--bd);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:500;color:var(--muted);line-height:18px}.cp-stat-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.cp-sections{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.cs{border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--bd)}.cs-hdr{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sec)}
+.cs-title{font-size:14px;font-weight:600;color:#fff;line-height:21px}.cs-pct{font-size:16px;font-weight:700;color:#fff;line-height:24px;white-space:nowrap}.cs-body{padding:10px 12px;background:var(--sf)}
+.ind-row{display:grid;grid-template-columns:44px minmax(0,1fr) 112px;gap:8px;align-items:start;margin-bottom:7px;padding:7px 8px;border-radius:6px;border-left:4px solid transparent;font-size:14px;line-height:21px}.ind-code{font-size:12px;font-weight:800;color:var(--muted);line-height:18px;margin-top:1px}.ind-lbl{color:var(--text)}.ind-val{font-size:12px;font-weight:800;color:var(--muted);background:var(--sf2);padding:3px 7px;border-radius:8px;text-align:right;line-height:17px;display:flex;flex-direction:column;align-items:flex-end;gap:1px}.ind-nn{font-size:11px;font-weight:700;color:var(--muted);line-height:15px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:21px}.tbl th{background:var(--navy);color:rgba(255,255,255,.88);padding:8px 10px;text-align:left;font-weight:600;font-size:12px;line-height:18px;position:sticky;top:0;z-index:1}.tbl td{padding:8px 10px;border-bottom:1px solid var(--bd);color:var(--text);vertical-align:top}.tbl tbody tr:hover{background:var(--sf2)}
+.group-summary{display:grid;gap:10px;margin-bottom:14px}.group-summary-card{border:1px solid var(--bd);border-left:4px solid var(--sec);border-radius:var(--r-sm);padding:12px 14px;background:var(--sf2)}.group-summary-lbl{font-size:14px;font-weight:600;color:var(--muted);line-height:21px;margin-bottom:3px}.group-summary-val{font-size:24px;font-weight:700;color:var(--navy);line-height:30px}.group-summary-sub{font-size:12px;color:var(--muted);line-height:18px;margin-top:2px}
+.pct-bar{display:flex;align-items:center;gap:8px;min-width:150px}.pct-trk{flex:1;height:12px;background:var(--sf2);border-radius:4px;border:1px solid var(--bd);overflow:hidden}.pct-fil{height:100%;border-radius:4px;background:var(--sec)}.pct-txt{width:50px;text-align:right;font-weight:700;color:var(--navy)}
+.ft{text-align:center;padding:20px 0 12px;font-size:12px;color:var(--subtle);line-height:18px;border-top:1px solid var(--bd);margin-top:4px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.mini-kpis,.pillar-grid{grid-template-columns:repeat(2,1fr)}.cp-sections{grid-template-columns:1fr}.radar-metrics{max-width:none}}
+@media(max-width:768px){.hd{align-items:flex-start}.hd-badges{display:none}.tab-bar{top:54px}.kpis{grid-template-columns:repeat(2,1fr)}.radar-figure-title{font-size:22px}.radar-wrap{height:560px}.ct-grid,.fig-grid{grid-template-columns:1fr}.ct-list{position:static;height:auto;max-height:none;display:block}.ct-scrl{max-height:320px;min-height:0}.pillar-grid{grid-template-columns:1fr}.mini-kpis{grid-template-columns:1fr 1fr}.cp-sections{grid-template-columns:1fr}.ind-row{grid-template-columns:40px 1fr}.ind-val{grid-column:2;text-align:left;width:max-content;align-items:flex-start}.chart-box{height:460px}}
+@media(max-width:480px){.wrap{padding:14px 12px 34px}.kpis{grid-template-columns:1fr 1fr}.kp-v{font-size:20px}.tab{padding:9px 12px;font-size:14px}.dd-sel,.search-inp{min-width:100%;width:100%}.radar-metrics{grid-template-columns:1fr;gap:8px;margin:14px 0}.radar-metric{min-height:auto;padding:10px 12px}.radar-metric-val{font-size:28px}.radar-figure-title{font-size:18px}.radar-wrap{height:440px}.mini-kpis{grid-template-columns:1fr}.chart-box{height:400px}}
+</style>
+</head>
+<body>
+<div class="hd">
+  <div class="hd-left">
+    <div class="hd-l">
+      <h1>HAI Surveillance WPRO &mdash; Facility-Level Dashboard</h1>
+      <p id="metaLine"></p>
+    </div>
+  </div>
+  <div class="hd-badges"><span class="badge badge-o">WPRO</span><span class="badge badge-g">WHO &middot; 2026</span></div>
+</div>
+<div class="tab-bar">
+  <div class="tabs">
+    <button class="tab on" onclick="sw('ov',this)">Overview</button>
+    <button class="tab" onclick="sw('ct',this)">By Country</button>
+    <button class="tab" onclick="sw('lvl',this)">By Facility Level</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="kpi-facts" class="kpis"></div>
+
+  <div id="s-ov" class="sec on">
+    <div class="cd">
+      <div class="cd-t">Regional Profile &mdash; 8 Facility HAI Surveillance Capacity Pillars <span class="fig-tag">FIG 1</span></div>
+      <div class="fig-sub">Source: HAI facility results.xlsx / Sheet1. Values are facility-level proportions across 604 health-care facilities in 23 WPRO countries/areas.</div>
+      <div class="radar-figure">
+        <div class="radar-figure-title">Facility-level regional profile by eight HAI surveillance capacity pillars</div>
+        <div class="radar-figure-sub">Facilities reporting capacity (%) by eight pillar</div>
+        <div class="radar-metrics" id="radarMetrics"></div>
+        <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
+      </div>
+    </div>
+    <div class="cd">
+      <div class="cd-t">Heatmap &mdash; Country Facility Capacity by Pillar <span class="fig-tag">FIG 2</span></div>
+      <div class="fig-sub">Each cell shows n/N (%) of facilities reporting capacity for the Table 10 pillar. Labels match the radar chart above.</div>
+      <div class="leg">
+        <div class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>75-100%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:var(--orange)"></span>50-74%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:#64748B"></span>25-49%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>0-24%</div>
+      </div>
+      <div class="hm-wrap hm-overview-wrap"><table class="hm hm-overview" id="heatmapTbl"></table></div>
+      <div class="note-box" style="margin-top:12px"><strong>Color coding:</strong> Green 75-100% &middot; Amber 50-74% &middot; Slate 25-49% &middot; Red 0-24%. WPRO Regional row is placed at the bottom and summarizes all 604 facilities.</div>
+    </div>
+  </div>
+
+  <div id="s-ct" class="sec">
+    <div class="ct-grid">
+      <aside class="ct-list">
+        <div class="ct-hdr">
+          <div class="lbl">Country / area</div>
+          <div class="sub" id="ctCount"></div>
+        </div>
+        <div style="padding:10px;border-bottom:1px solid var(--bd)"><input id="ctSearch" class="search-inp" placeholder="Search country" oninput="renderCountryList()"></div>
+        <div class="ct-scrl" id="ctList"></div>
+      </aside>
+      <main>
+        <div class="cp-hdr">
+          <div>
+            <div class="cp-name" id="ctName"></div>
+            <div class="cp-sub" id="ctSub"></div>
+          </div>
+          <span class="inc-pill" id="ctIncome"></span>
+        </div>
+        <div class="mini-kpis" id="ctMini"></div>
+        <div class="fig-grid">
+          <div class="cd" style="margin-bottom:0">
+            <div class="profile-chart-title">Spider Chart for HAI Capacity</div>
+            <div class="profile-chart-sub" id="ctRadarSub">Country vs WPRO Average</div>
+            <div class="country-chart country-radar-chart"><canvas id="ctRadar"></canvas></div>
+          </div>
+          <div class="cd" style="margin-bottom:0">
+            <div class="profile-chart-title">Bar Chart for HAI Capacity</div>
+            <div class="profile-chart-sub" id="ctBarSub">Country vs WPRO Average</div>
+            <div class="country-chart country-bar-chart"><canvas id="ctBar"></canvas></div>
+          </div>
+        </div>
+        <div id="ctDomainOverview"></div>
+        <div class="cp-profile-card">
+          <div class="cp-profile-top">
+            <div>
+              <div class="cp-profile-title" id="profileTitle"></div>
+              <div class="cp-profile-sub">Grouped by workbook table.</div>
+            </div>
+          </div>
+          <div class="cp-sections" id="profileSections"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="s-lvl" class="sec">
+    <div class="cd">
+      <div class="cd-t">Level Summary Table</div>
+      <div class="fig-sub">Raw n/N (%) values from the selected workbook table.</div>
+      <div class="controls">
+        <select id="levelTable" class="dd-sel" onchange="renderLevelTab()"></select>
+      </div>
+      <div class="hm-wrap"><table class="tbl" id="levelSummary"></table></div>
+    </div>
+  </div>
+
+  <div class="ft">Source: HAI facility results.xlsx / Sheet1. Generated static dashboard uses hai_facility_data.js. Values are shown as source n/N (%) wherever available.</div>
+</div>
+
+<script>
+const D = window.__HAI_FACILITY_DATA__;
+if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+Chart.defaults.font.family = 'Roboto, "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.font.size = 14;
+Chart.defaults.color = '#212529';
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.datalabels.display = false;
+
+const C = {navy:'#003F5C', orange:'#D85A1A', blue:'#009ADE', green:'#0F7A5A', red:'#C0392B', amber:'#D8941A', grey:'#ADB5BD'};
+const pillarNames = ['Strategic plan capacity','Data collection protocol','Reporting mechanism','Data quality checks','Data analysis','Data interpretation','Communication / feedback','Monitoring and evaluation'];
+const capacityChartLabels = ['Developing strategic plans','Developing data protocol','Reporting','Checking data quality','Analysis','Interpretation','Feedback','M&E'];
+const selected = { country: Object.keys(D.summary)[0] || '' };
+let radarChart, sampleChart, ctRadarChart, ctBarChart;
+
+function el(id){return document.getElementById(id)}
+function table(no){return D.tables.find(t => t.table_no === Number(no))}
+function fmt(v){return v == null || Number.isNaN(Number(v)) ? 'N/A' : Number(v).toFixed(1) + '%'}
+function raw(entry){return entry && entry.raw ? entry.raw : 'N/A'}
+function nn(entry){return entry && entry.num != null && entry.den != null ? `${entry.num}/${entry.den}` : 'N/A'}
+function avg(vals){const xs = vals.filter(v => v != null && !Number.isNaN(v)); return xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null}
+function pctClass(v){if(v == null) return 'pct-na'; if(v >= 75) return 'pct-good'; if(v >= 50) return 'pct-mid'; if(v >= 25) return 'pct-warn'; return 'pct-bad'}
+function pctColor(v){if(v == null) return C.grey; if(v >= 75) return C.green; if(v >= 50) return C.orange; if(v >= 25) return '#64748B'; return C.red}
+function heatBg(v){if(v == null) return 'var(--sf2)'; if(v < 25) return 'rgba(192,57,43,.12)'; if(v < 50) return 'rgba(100,116,139,.12)'; if(v < 75) return 'rgba(216,90,26,.13)'; return 'rgba(15,122,90,.12)'}
+function heatTx(v){if(v == null) return 'var(--subtle)'; if(v < 25) return C.red; if(v < 50) return '#475569'; if(v < 75) return C.orange; return C.green}
+function band(v){if(v == null) return 'na'; if(v >= 75) return 'high'; if(v >= 50) return 'mid'; if(v >= 25) return 'low'; return 'verylow'}
+const BAND_COLORS = {high:'#0F7A5A', mid:'#D85A1A', low:'#64748B', verylow:'#C0392B', na:'#CBD5E1'};
+function shortTitle(t){return t.title.replace(/^Table\s*\d+\s*-\s*/i,'').replace(/\s+by levels of care$/i,'').replace(/\s+/g,' ').trim()}
+function shortLabel(ind, i){return ind.code.startsWith('10.') ? pillarNames[i] : ind.label.replace(/\s+/g,' ').replace(/^Facilities\s+(with|which)\s+/i,'').replace(/^Facility-level\s+/i,'').trim()}
+function excelLabel(ind){return ind.label.replace(/\s+/g,' ').trim()}
+function wrapLabel(label, max=24){
+  const words = label.trim().split(/\s+/);
+  const lines = [];
+  let line = '';
+  words.forEach(word => {
+    const next = line ? `${line} ${word}` : word;
+    if(next.length > max && line){
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  });
+  if(line) lines.push(line);
+  return lines;
+}
+function chartLabel(ind){
+  const text = excelLabel(ind)
+    .replace(/^Facilities\s+/i,'')
+    .replace(/\s+HAI surveillance\s+/ig,' HAI ')
+    .replace(/\s+facility\s+/ig,' facility ');
+  const words = text.split(/\s+/);
+  const lines = [ind.code];
+  let line = '';
+  words.forEach(word => {
+    const next = line ? `${line} ${word}` : word;
+    if(next.length > 18 && line){
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  });
+  if(line) lines.push(line);
+  return lines.slice(0, 4);
+}
+function entryForCountry(t, country, key){const row = t.countries.find(c => c.country === country); return row && row.values[key] ? row.values[key] : null}
+function valueForLevel(t, level, key){return t.levels && t.levels[level] && t.levels[level][key] ? t.levels[level][key] : null}
+function tableMeanForCountry(no, country){const t = table(no); return avg(t.indicators.map(ind => entryForCountry(t, country, ind.key)?.pct))}
+function allIndicatorCount(){return D.tables.reduce((sum,t)=>sum+t.indicators.length,0)}
+function esc(s){return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function pctBar(entry, color){const v = entry?.pct; return `<div class="pct-bar"><div class="pct-trk"><div class="pct-fil" style="width:${v == null ? 0 : Math.max(0, Math.min(100, v))}%;--sec:${color || pctColor(v)}"></div></div><div class="pct-txt">${fmt(v)}</div></div>`}
+
+function sw(id, btn){
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  el('s-' + id).classList.add('on');
+  btn.classList.add('on');
+  setTimeout(() => { [radarChart, sampleChart, ctRadarChart, ctBarChart].forEach(ch => ch && ch.resize()); }, 60);
+}
+
+function animateKpiNumbers(root=document, duration=3000){
+  root.querySelectorAll('.kp-v,.radar-metric-val').forEach(node=>{
+    const finalText=node.dataset.finalValue||node.textContent.trim();
+    const match=finalText.match(/-?[\d,]+(?:\.\d+)?/);
+    if(!match)return;
+    node.dataset.finalValue=finalText;
+    const raw=match[0];
+    const target=parseFloat(raw.replace(/,/g,''));
+    const decimals=raw.includes('.')?raw.split('.')[1].length:0;
+    const prefix=finalText.slice(0,match.index);
+    const suffix=finalText.slice(match.index+raw.length);
+    const useComma=raw.includes(',');
+    const started=performance.now();
+    node.style.fontVariantNumeric='tabular-nums';
+    function format(value){
+      let out=value.toFixed(decimals);
+      if(useComma)out=out.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+      return out;
+    }
+    function tick(now){
+      const t=Math.min((now-started)/duration,1);
+      const eased=1-Math.pow(1-t,3);
+      node.textContent=prefix+format(target*eased)+suffix;
+      if(t<1)requestAnimationFrame(tick);
+      else node.textContent=finalText;
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+function renderKPIs(){
+  const t1 = table(1), t2 = table(2), t5 = table(5), t10 = table(10);
+  const total = D.meta.n_facilities;
+  const tertiary = Object.values(D.summary).reduce((s,c)=>s+c.tertiary,0);
+  const secondary = Object.values(D.summary).reduce((s,c)=>s+c.secondary,0);
+  const vn = D.summary.Vietnam ? D.summary.Vietnam.total : 0;
+  const t10Mean = avg(t10.indicators.map(ind => valueForLevel(t10,'wpro',ind.key)?.pct));
+  const kpis = [
+    {c:'kg', l:'Facilities in source', v:total.toLocaleString(), s:`${tertiary} tertiary + ${secondary} secondary`},
+    {c:'kb', l:'Active IPC programme', v:fmt(valueForLevel(t1,'wpro',t1.indicators[0].key)?.pct), s:raw(valueForLevel(t1,'wpro',t1.indicators[0].key))},
+    {c:'ko', l:'Active HAI surveillance', v:fmt(valueForLevel(t2,'wpro',t2.indicators[0].key)?.pct), s:raw(valueForLevel(t2,'wpro',t2.indicators[0].key))},
+    {c:'kn', l:'Avg capacity, 8 pillars', v:fmt(t10Mean), s:'Table 10 regional mean'},
+    {c:'kr', l:'Vietnam share of sample', v:fmt(vn / total * 100), s:`${vn.toLocaleString()} of ${total.toLocaleString()} facilities`}
+  ];
+  el('kpi-facts').innerHTML = kpis.map(k => `<div class="kp ${k.c}"><div class="kp-l">${k.l}</div><div class="kp-v">${k.v}</div><div class="kp-s">${k.s}</div></div>`).join('');
+  animateKpiNumbers(el('kpi-facts'),3000);
+  const hics = Object.values(D.summary).filter(s => s.income === 'HICs').length;
+  const lmics = Object.values(D.summary).filter(s => s.income === 'L&MICs').length;
+  el('metaLine').innerHTML = `${D.meta.n_countries} countries/areas &middot; ${D.meta.n_facilities.toLocaleString()} facilities &middot; ${hics} HICs + ${lmics} L&amp;MICs`;
+}
+
+function renderRadar(){
+  const t10 = table(10);
+  const wpro = t10.indicators.map(ind => valueForLevel(t10,'wpro',ind.key)?.pct ?? null);
+  const labels = t10.indicators.map(ind => wrapLabel(excelLabel(ind), 23));
+  const ranked = t10.indicators.map((ind,i)=>({ind, label:excelLabel(ind), v:wpro[i]})).filter(d=>d.v!=null).sort((a,b)=>b.v-a.v);
+  const wproMean = avg(wpro);
+  el('radarMetrics').innerHTML = `
+    <div class="radar-metric"><div class="radar-metric-lbl">Highest</div><div class="radar-metric-val green">${fmt(ranked[0]?.v)}</div><div class="radar-metric-sub">${esc(ranked[0]?.label || '')}</div></div>
+    <div class="radar-metric"><div class="radar-metric-lbl">Lowest</div><div class="radar-metric-val red">${fmt(ranked[ranked.length-1]?.v)}</div><div class="radar-metric-sub">${esc(ranked[ranked.length-1]?.label || '')}</div></div>
+    <div class="radar-metric"><div class="radar-metric-lbl">Average</div><div class="radar-metric-val">${fmt(wproMean)}</div><div class="radar-metric-sub">8 pillars</div></div>`;
+  animateKpiNumbers(el('radarMetrics'),3000);
+  if(radarChart){radarChart.destroy();radarChart = null}
+  radarChart = new Chart(el('radarChart'), {
+    type:'radar',
+    data:{labels,datasets:[{
+      label:'WPRO Regional',
+      data:wpro,
+      backgroundColor:'rgba(47,125,77,.13)',
+      borderColor:'#2F7D4D',
+      borderWidth:2.5,
+      pointBackgroundColor:'#2F7D4D',
+      pointBorderColor:'#fff',
+      pointBorderWidth:1.5,
+      pointRadius:3.5,
+      pointHoverRadius:7,
+      pointHitRadius:14
+    }]},
+    options:{
+      maintainAspectRatio:false,
+      animation:{duration:1400,easing:'easeOutQuart'},
+      animations:{radius:{duration:900,easing:'easeOutBack',from:0}},
+      layout:{padding:{top:44,bottom:20,left:86,right:86}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          title:items=>excelLabel(t10.indicators[items[0].dataIndex]),
+          label:ctx=>`${ctx.parsed.r.toFixed(1)}% of facilities (${raw(valueForLevel(t10,'wpro',t10.indicators[ctx.dataIndex].key))})`
+        }},
+        datalabels:{display:true,color:'#111827',
+          font:{size:14,weight:'800'},formatter:v=>v.toFixed(1)+'%',
+          anchor:'end',align:'end',offset:5,clip:false}
+      },
+      scales:{r:{beginAtZero:true,max:100,
+        ticks:{stepSize:20,callback:v=>v+'%',color:'#B05A28',font:{size:11,weight:'700'},backdropColor:'rgba(255,255,255,.72)',showLabelBackdrop:true},
+        grid:{circular:false,color:ctx=>ctx.index===5?'rgba(169,75,29,.68)':'rgba(216,90,26,.42)',lineWidth:ctx=>ctx.index===5?1.3:1},
+        angleLines:{color:'rgba(169,75,29,.46)',lineWidth:1},
+        pointLabels:{font:{size:15,weight:'750'},color:'#111827',padding:26,centerPointLabels:true}}}
+    }
+  });
+}
+
+function renderHeatmap(){
+  const t10 = table(10);
+  const rows = t10.countries.slice().sort((a,b)=>a.country.localeCompare(b.country));
+  const labelHtml = (ind, i) => wrapLabel(capacityChartLabels[i] || excelLabel(ind), 14).map(esc).join('<br>');
+  const headers = t10.indicators.map((ind,i)=>`<th title="${esc(excelLabel(ind))}">${labelHtml(ind,i)}</th>`).join('');
+  const body = rows.map(row => {
+    const sample = D.summary[row.country]?.total ?? '';
+    return `<tr><td>${esc(row.country)}</td><td>${sample}</td>${t10.indicators.map(ind => {
+      const e = row.values[ind.key];
+      return `<td title="${esc(excelLabel(ind) + ': ' + raw(e))}" style="background:${heatBg(e?.pct)};color:${heatTx(e?.pct)}">${fmt(e?.pct)}</td>`;
+    }).join('')}</tr>`;
+  }).join('');
+  const wproRow = `<tr class="wpro-r"><td>WPRO Regional</td><td>${D.meta.n_facilities.toLocaleString()}</td>${t10.indicators.map(ind=>{
+    const e = valueForLevel(t10,'wpro',ind.key);
+    return `<td title="${esc(excelLabel(ind) + ': ' + raw(e))}">${fmt(e?.pct)}</td>`;
+  }).join('')}</tr>`;
+  el('heatmapTbl').innerHTML = `<thead><tr><th>Country / area</th><th>Sample size</th>${headers}</tr></thead><tbody>${body}${wproRow}</tbody>`;
+}
+
+function countryRows(){
+  return table(10).countries.slice().sort((a,b)=>a.country.localeCompare(b.country));
+}
+
+function renderCountryList(){
+  const q = el('ctSearch').value.trim().toLowerCase();
+  const rows = countryRows().filter(c => c.country.toLowerCase().includes(q));
+  el('ctCount').textContent = `${rows.length} shown`;
+  el('ctList').innerHTML = rows.map(c => {
+    return `<div class="ct-item ${c.country===selected.country?'on':''}" onclick="selectCountry('${esc(c.country).replace(/&#39;/g,'\\&#39;')}')"><span class="ct-name">${esc(c.country)}</span></div>`;
+  }).join('');
+}
+
+function selectCountry(name){
+  selected.country = name;
+  renderCountryList();
+  renderCountry();
+}
+
+function renderCountry(){
+  const s = D.summary[selected.country] || {};
+  const t1 = table(1), t2 = table(2), t10 = table(10);
+  const ipc = entryForCountry(t1, selected.country, t1.indicators[0].key);
+  const hai = entryForCountry(t2, selected.country, t2.indicators[0].key);
+  const score = tableMeanForCountry(10, selected.country);
+  el('ctName').textContent = selected.country;
+  el('ctSub').textContent = `${s.total || 0} facilities (${s.tertiary || 0} tertiary, ${s.secondary || 0} secondary)`;
+  el('ctIncome').innerHTML = (s.income || 'Income level not available').replace('&','&amp;');
+  el('ctMini').innerHTML = [
+    {c:'n',l:'Facility sample',v:(s.total || 0).toLocaleString(),d:`${s.tertiary || 0} tertiary + ${s.secondary || 0} secondary`},
+    {c:'g',l:'Active IPC programme',v:fmt(ipc?.pct),d:raw(ipc)},
+    {c:'b',l:'Active HAI surveillance',v:fmt(hai?.pct),d:raw(hai)},
+    {c:'o',l:'Avg capacity, Table 10',v:fmt(score),d:'Mean of eight pillars'}
+  ].map(k=>`<div class="mini ${k.c}"><div class="lb">${k.l}</div><div class="vl">${k.v}</div><div class="ds">${k.d}</div></div>`).join('');
+  renderCountryCharts();
+  renderCountryPillars();
+  renderProfile();
+}
+
+function renderCountryCharts(){
+  const t10 = table(10);
+  const labels = t10.indicators.map((ind,i) => wrapLabel(capacityChartLabels[i] || shortLabel(ind,i), 16));
+  const fullLabels = t10.indicators.map(ind => `${ind.code} ${excelLabel(ind)}`);
+  const countryData = t10.indicators.map(ind => entryForCountry(t10, selected.country, ind.key)?.pct ?? null);
+  const wproData = t10.indicators.map(ind => valueForLevel(t10, 'wpro', ind.key)?.pct ?? null);
+  el('ctRadarSub').textContent = `${selected.country} vs WPRO Average`;
+  el('ctBarSub').textContent = `${selected.country} vs WPRO Average`;
+
+  if(ctRadarChart){ctRadarChart.destroy();ctRadarChart = null}
+  const radarLabelPlugin = {
+    id:'ctRadarLabels',
+    afterDraw(chart){
+      const {ctx, scales:{r}} = chart;
+      if(!r) return;
+      ctx.save();
+      const boxes = [];
+      const overlaps = (a,b) => !(a.x + a.w < b.x || b.x + b.w < a.x || a.y + a.h < b.y || b.y + b.h < a.y);
+      const overlapArea = (a,b) => Math.max(0, Math.min(a.x+a.w,b.x+b.w) - Math.max(a.x,b.x)) * Math.max(0, Math.min(a.y+a.h,b.y+b.h) - Math.max(a.y,b.y));
+      const clampBox = box => {
+        const area = chart.chartArea;
+        box.x = Math.max(area.left + 2, Math.min(area.right - box.w - 2, box.x));
+        box.y = Math.max(area.top + 2, Math.min(area.bottom - box.h - 2, box.y));
+      };
+      const drawBox = box => {
+        const rr = 4;
+        ctx.fillStyle = box.bg;
+        ctx.strokeStyle = box.bdr;
+        ctx.lineWidth = .8;
+        ctx.beginPath();
+        ctx.moveTo(box.x+rr,box.y);ctx.lineTo(box.x+box.w-rr,box.y);ctx.arcTo(box.x+box.w,box.y,box.x+box.w,box.y+rr,rr);
+        ctx.lineTo(box.x+box.w,box.y+box.h-rr);ctx.arcTo(box.x+box.w,box.y+box.h,box.x+box.w-rr,box.y+box.h,rr);
+        ctx.lineTo(box.x+rr,box.y+box.h);ctx.arcTo(box.x,box.y+box.h,box.x,box.y+box.h-rr,rr);
+        ctx.lineTo(box.x,box.y+rr);ctx.arcTo(box.x,box.y,box.x+rr,box.y,rr);ctx.closePath();
+        ctx.fill();ctx.stroke();
+        ctx.fillStyle = box.col;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(box.txt, box.x + box.w / 2, box.y + box.h / 2);
+      };
+      chart.data.datasets.forEach((ds, di) => {
+        const meta = chart.getDatasetMeta(di);
+        const isWPRO = di === 0;
+        const col = isWPRO ? C.orange : '#009900';
+        const bg = isWPRO ? 'rgba(255,247,237,.96)' : 'rgba(237,255,237,.96)';
+        const bdr = isWPRO ? 'rgba(216,90,26,.4)' : 'rgba(0,153,0,.4)';
+        ctx.font = `700 10px Roboto, "Noto Sans", Arial, sans-serif`;
+        meta.data.forEach((pt, i) => {
+          const v = ds.data[i];
+          if(v === null || v === undefined) return;
+          const cx = r.xCenter, cy = r.yCenter;
+          const dx = pt.x - cx, dy = pt.y - cy;
+          const rawLen = Math.sqrt(dx*dx + dy*dy);
+          const axisAngle = (Math.PI * 2 * i / ds.data.length) - Math.PI / 2;
+          const len = rawLen || 1;
+          const ux = rawLen < 2 ? Math.cos(axisAngle) : dx / len;
+          const uy = rawLen < 2 ? Math.sin(axisAngle) : dy / len;
+          const safeOuter = Math.max(48, r.drawingArea - 24);
+          const safeInner = 34;
+          const valueDist = safeInner + (safeOuter - safeInner) * Math.max(0, Math.min(100, Number(v))) / 100;
+          const labelDist = Math.max(safeInner, Math.min(safeOuter, valueDist + (isWPRO ? -6 : 6)));
+          const sideNudge = isWPRO ? -8 : 8;
+          const lx = cx + ux * labelDist + (-uy * sideNudge);
+          const ly = cy + uy * labelDist + (ux * sideNudge);
+          const txt = Math.round(v) + '%';
+          const tw = ctx.measureText(txt).width + 9;
+          const th = 16;
+          const base = {x:lx - tw / 2,y:ly - th / 2,w:tw,h:th,txt,col,bg,bdr,ux,uy,di,i};
+          const tries = [
+            [0,0], [ux*14,uy*14], [-ux*14,-uy*14], [-uy*18,ux*18], [uy*18,-ux*18],
+            [ux*26-uy*12,uy*26+ux*12], [ux*26+uy*12,uy*26-ux*12],
+            [-ux*26-uy*12,-uy*26+ux*12], [-ux*26+uy*12,-uy*26-ux*12],
+            [-uy*28,ux*28], [uy*28,-ux*28], [ux*42,uy*42], [-ux*42,-uy*42],
+            [-uy*44,ux*44], [uy*44,-ux*44], [ux*52-uy*24,uy*52+ux*24], [ux*52+uy*24,uy*52-ux*24]
+          ];
+          let picked = null;
+          let best = null, bestScore = Infinity;
+          for(const [ox,oy] of tries){
+            const box = {...base,x:base.x+ox,y:base.y+oy};
+            clampBox(box);
+            const score = boxes.reduce((sum,b) => sum + overlapArea(box,b), 0);
+            if(score < bestScore){best = box; bestScore = score}
+            if(!boxes.some(b => overlaps(box,b))){picked = box; break}
+          }
+          boxes.push(picked || best || base);
+        });
+      });
+      boxes.forEach(drawBox);
+      ctx.restore();
+    }
+  };
+  ctRadarChart = new Chart(el('ctRadar'), {
+    type:'radar',
+    data:{labels,datasets:[
+      {label:'WPRO Average',data:wproData,backgroundColor:'rgba(216,90,26,.07)',borderColor:C.orange,borderWidth:2,pointBackgroundColor:C.orange,pointRadius:3.5,pointHoverRadius:5,pointBorderColor:'#fff',pointBorderWidth:1.5,borderDash:[5,4]},
+      {label:selected.country,data:countryData,backgroundColor:'rgba(0,153,0,.09)',borderColor:'#009900',borderWidth:2.5,pointBackgroundColor:'#009900',pointRadius:3.5,pointHoverRadius:5,pointBorderColor:'#fff',pointBorderWidth:1.5}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:56},plugins:{legend:{display:false},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex],label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},datalabels:{display:false}},scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20,font:{size:10},backdropColor:'rgba(238,241,246,.85)',color:'#6C757D',callback:v=>v+'%'},pointLabels:{font:{size:10,weight:'700'},color:C.navy},grid:{color:'rgba(0,63,92,.16)'},angleLines:{color:'rgba(0,63,92,.16)'}}}},
+    plugins:[radarLabelPlugin]
+  });
+
+  if(ctBarChart){ctBarChart.destroy();ctBarChart = null}
+  const barValue = ctx => Number(ctx?.dataset?.data?.[ctx.dataIndex]);
+  ctBarChart = new Chart(el('ctBar'), {
+    type:'bar',
+    data:{labels,datasets:[
+      {label:selected.country,data:countryData,backgroundColor:'#0F7A5A',borderColor:'#0F7A5A',borderWidth:1,borderRadius:5,barPercentage:.7,categoryPercentage:.72},
+      {label:'WPRO Average',data:wproData,backgroundColor:C.orange,borderColor:C.orange,borderWidth:1,borderRadius:5,barPercentage:.7,categoryPercentage:.72}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',animation:{duration:650,easing:'easeOutQuart'},layout:{padding:{top:4,left:0,right:56,bottom:0}},plugins:{legend:{display:true,position:'top',align:'end',labels:{font:{size:12,weight:'600'},color:C.navy,usePointStyle:true,pointStyle:'rectRounded',boxWidth:13,padding:14}},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex],label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}},datalabels:{display:ctx=>ctx?.dataset?.data?.[ctx.dataIndex]!=null,formatter:v=>fmt(v),anchor:'end',align:ctx=>barValue(ctx)>=96?'left':'right',offset:4,clip:false,clamp:true,color:ctx=>barValue(ctx)>=96?'#fff':'#111827',font:{size:11,weight:'800'}}},scales:{x:{min:0,max:100,clip:false,ticks:{callback:v=>v+'%',font:{size:11},color:'#6C757D',stepSize:20},grid:{color:'rgba(0,63,92,.12)'}},y:{ticks:{font:{size:11,weight:'700'},color:C.navy,autoSkip:false,padding:8},grid:{display:false}}}}
+  });
+}
+
+function renderCountryPillars(){
+  const summary = D.summary[selected.country] || {};
+  const domainTables = D.tables.filter(t => t.table_no <= 9);
+  const rows = domainTables.map(t => {
+    const chips = t.indicators.map(ind => {
+      const e = entryForCountry(t, selected.country, ind.key);
+      const b = band(e?.pct);
+      return `<span class="dom-chip ${b}" title="${esc(ind.code + ' ' + excelLabel(ind) + ': ' + raw(e))}">${ind.code}</span>`;
+    }).join('');
+    return `<div class="dom-row">
+      <div class="dom-sec" title="${esc(shortTitle(t))}">T${t.table_no}</div>
+      <div class="dom-chips">${chips}</div>
+    </div>`;
+  }).join('');
+  el('ctDomainOverview').innerHTML = `<section class="dom-overview">
+    <div class="dom-top">
+      <div>
+        <div class="dom-kicker">HAI Domain Overview</div>
+        <div class="dom-country">${esc(selected.country)} <span class="inc-pill" style="font-size:10px;padding:2px 8px;margin-left:6px">${esc(summary.income || '')}</span></div>
+      </div>
+    </div>
+    ${rows}
+    <div class="leg" style="margin-top:12px;margin-bottom:0">
+      <div class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>75-100%</div>
+      <div class="leg-i"><span class="leg-dot" style="background:var(--orange)"></span>50-74%</div>
+      <div class="leg-i"><span class="leg-dot" style="background:#64748B"></span>25-49%</div>
+      <div class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>0-24%</div>
+    </div>
+  </section>`;
+}
+
+function renderProfile(){
+  const total = allIndicatorCount();
+  el('profileTitle').textContent = `Indicator Profile - ${total} facility indicators`;
+  el('profileSections').innerHTML = D.tables.map(t => {
+    const vals = t.indicators.map(ind => entryForCountry(t, selected.country, ind.key)?.pct);
+    const m = avg(vals);
+    const col = pctColor(m);
+    const rows = t.indicators.map(ind => {
+      const e = entryForCountry(t, selected.country, ind.key);
+      const b = band(e?.pct);
+      const rowColor = BAND_COLORS[b];
+      return `<div class="ind-row" style="border-left-color:${rowColor};background:${heatBg(e?.pct)}">
+        <div class="ind-code">${ind.code}</div>
+        <div class="ind-lbl">${esc(ind.label)}${ind.option ? `<div style="font-size:12px;color:var(--muted);line-height:18px">${esc(ind.option)}</div>` : ''}</div>
+        <div class="ind-val" style="color:${rowColor};border:1px solid ${rowColor}33;background:rgba(255,255,255,.72)"><span>${fmt(e?.pct)}</span><span class="ind-nn">${esc(nn(e))}</span></div>
+      </div>`;
+    }).join('');
+    return `<section class="cs"><div class="cs-hdr" style="--sec:${col}"><div class="cs-title">Table ${t.table_no}: ${esc(shortTitle(t))}</div></div><div class="cs-body">${rows}</div></section>`;
+  }).join('');
+}
+
+function renderLevelControls(){
+  const opts = D.tables.map(t => `<option value="${t.table_no}" ${t.table_no===10?'selected':''}>Table ${t.table_no} - ${esc(shortTitle(t))}</option>`).join('');
+  el('levelTable').innerHTML = opts;
+}
+
+function renderLevelTab(){
+  const t = table(el('levelTable').value);
+  el('levelSummary').innerHTML = `<thead><tr><th>Code</th><th>Indicator</th><th>WPRO</th><th>Tertiary</th><th>Secondary</th></tr></thead><tbody>${t.indicators.map(ind => {
+    const w = valueForLevel(t,'wpro',ind.key), te = valueForLevel(t,'tertiary',ind.key), se = valueForLevel(t,'secondary',ind.key);
+    return `<tr><td><strong>${ind.code}</strong></td><td>${esc(ind.label)}${ind.option?`<div style="font-size:12px;color:var(--muted)">${esc(ind.option)}</div>`:''}</td><td>${pctBar(w,C.orange)}<div style="font-size:12px;color:var(--muted)">${esc(raw(w))}</div></td><td>${pctBar(te,C.green)}<div style="font-size:12px;color:var(--muted)">${esc(raw(te))}</div></td><td>${pctBar(se,C.blue)}<div style="font-size:12px;color:var(--muted)">${esc(raw(se))}</div></td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+function init(){
+  if(!D){document.body.innerHTML = '<div style="padding:24px;font-family:sans-serif">Cannot load hai_facility_data.js</div>'; return}
+  selected.country = countryRows()[0]?.country || Object.keys(D.summary)[0] || '';
+  renderKPIs();
+  renderRadar();
+  renderHeatmap();
+  renderCountryList();
+  renderCountry();
+  renderLevelControls();
+  renderLevelTab();
+}
+init();
+</script>
+</body>
+</html>
