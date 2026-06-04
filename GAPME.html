@@ -287,6 +287,7 @@ body{font-size:16px;line-height:1.5}
 .cd:hover{box-shadow:var(--shadow)}
 .cd-t{font-size:18px;font-weight:700;line-height:22.5px;margin-bottom:10px;color:var(--navy)}
 .fig-tag{font-size:12px;font-weight:500;line-height:18px;letter-spacing:normal}
+.desc-tog{font-size:15px;font-weight:800;line-height:1;color:#fff;width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.55);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none}
 .fig-sub{font-size:14px;line-height:24.5px;font-style:normal;margin:-4px 0 13px}
 .note-box{font-size:14px;line-height:21px}
 .sec-ttl{font-family:var(--font);font-size:18px;font-weight:700;line-height:22.5px;border-bottom:0;padding-bottom:0}
@@ -406,7 +407,7 @@ body{font-size:16px;line-height:1.5}
 <!-- ════ TAB 1: OVERVIEW ════ -->
 <div id="s-ov" class="sec on">
   <div class="cd">
-    <div class="cd-t">Regional Profile — 8 Strategic Directions <span class="fig-tag">FIG 1</span></div>
+    <div class="cd-t">Regional Profile — 8 Strategic Directions</div>
     <div class="fig-sub">Percentage of criteria met across all 25 countries/areas.</div>
     <div class="radar-figure">
       <div class="radar-figure-title">Regional results by eight strategic direction (2025)</div>
@@ -417,10 +418,10 @@ body{font-size:16px;line-height:1.5}
 
   <div class="cd">
     <div class="cd-t">Heatmap — Achievement by Country × Strategic Direction </div>
-    <div class="fig-sub">Green 75–100% · Amber 50–74% · Slate 25–49% · Red 0–24%</div>
+    <div class="fig-sub">Green 75–100% · Light green 50–74% · Slate 25–49% · Red 0–24%</div>
     <div class="leg">
       <div class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>75–100%</div>
-      <div class="leg-i"><span class="leg-dot" style="background:var(--orange)"></span>50–74%</div>
+      <div class="leg-i"><span class="leg-dot" style="background:#74C49A"></span>50–74%</div>
       <div class="leg-i"><span class="leg-dot" style="background:#64748B"></span>25–49%</div>
       <div class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>0–24%</div>
     </div>
@@ -471,8 +472,8 @@ body{font-size:16px;line-height:1.5}
         <button class="fpill" onclick="setGrpFilter('LMIC',this)">LMIC (16)</button>
       </div>
       <div class="ct-filter-sort">
-        <button class="sort-btn on" onclick="setSortMode('avg',this)">Score ↓</button>
-        <button class="sort-btn" onclick="setSortMode('name',this)">A–Z</button>
+        <button class="sort-btn" onclick="setSortMode('avg',this)">Score ↓</button>
+        <button class="sort-btn on" onclick="setSortMode('name',this)">A–Z</button>
         <span class="ct-filter-count" id="ctCount">25 / 25</span>
       </div>
     </div>
@@ -791,8 +792,9 @@ const SD_DD={
 
 /* HELPERS */
 function colV(v){return v>=60?P.green:v>=30?P.orange:P.red}
-function bgH(v){if(v<25)return'rgba(192,57,43,.12)';if(v<50)return'rgba(100,116,139,.12)';if(v<75)return'rgba(184,134,11,.13)';return'rgba(15,122,90,.12)'}
-function txH(v){if(v<25)return P.red;if(v<50)return'#475569';if(v<75)return'#B8860B';return P.green}
+function bgH(v){if(v<25)return'rgba(192,57,43,.12)';if(v<50)return'rgba(100,116,139,.12)';if(v<75)return'rgba(116,196,154,.22)';return'rgba(15,122,90,.12)'}
+function txH(v){if(v<25)return P.red;if(v<50)return'#475569';if(v<75)return'#2E9E68';return P.green}
+function colHM(v){return v>=75?P.green:v>=50?'#74C49A':v>=25?'#64748B':P.red}
 const tt={backgroundColor:P.sf,titleColor:P.navy,bodyColor:P.muted,borderColor:P.border,borderWidth:1,cornerRadius:6,padding:9,titleFont:{family:'Roboto, "Noto Sans", system-ui, sans-serif',weight:'700'},bodyFont:{family:'Roboto, "Noto Sans", system-ui, sans-serif'}};
 
 /* ══ TAB SWITCH ══ */
@@ -1028,14 +1030,14 @@ function buildHeatmap(){
 function renderDeepDive(){
   const n=+document.getElementById('ddSel').value;
   const dd=SD_DD[n];
-  let h=`<div class="fig-sub" style="margin:0 0 12px">Regional average: <strong style="color:${colV(dd.avg)}">${dd.avg}%</strong> &nbsp;·&nbsp; ${dd.cr.length} criteria evaluated</div>`;
+  let h=`<div class="fig-sub" style="margin:0 0 12px">Regional average: <strong style="color:${colHM(dd.avg)}">${dd.avg}%</strong> &nbsp;·&nbsp; ${dd.cr.length} criteria evaluated</div>`;
   dd.cr.forEach(cr=>{
-    const c=colV(cr.p);
+    const c=colHM(cr.p);
     const isZero=cr.p===0;
     const barW=isZero?'2px':`${cr.p}%`;
     const inside=cr.p>=22;
     const lblLeft=isZero?'8px':inside?`calc(${cr.p}% - 36px)`:`calc(${cr.p}% + 6px)`;
-    const lblColor=inside?'#fff':c;
+    const lblColor=inside?(c==='#74C49A'?'#0a4a36':'#fff'):c;
     h+=`<div class="crit-row">
       <div class="crit-lbl">${cr.l}</div>
       <div class="crit-track" style="position:relative;overflow:visible">
@@ -1258,6 +1260,11 @@ const IND_LABELS=[
 
 const INDICATORS={"Philippines":[["yes","yes","no","no","dk","no","yes","yes","yes","dk"],["yes","dk","dk","yes"],["dk","yes","dk","yes","no","yes","no","dk","yes","yes","no","no","no","no"],["no","no","dk","no","no","no","yes","no","dk","dk","no","yes","yes"],["yes","no","no","dk","dk","no","no","no","dk","dk","dk","no","yes","yes","dk"],["yes","no","yes","no","dk"],["no","no"],["yes","yes","yes"]],"Micronesia":[["no","no","no","no","dk","no","no","dk","no","dk"],["yes","dk","no","yes"],["no","dk","no","no","yes","yes","dk","yes","no","yes","dk","yes","no","dk"],["no","yes","dk","dk","dk","no","no","yes","yes","dk","no","yes","yes"],["no","no","yes","yes","yes","dk","no","no","no","dk","no","no","yes","no","no"],["no","no","no","no","dk"],["no","no"],["no","dk","yes"]],"Palau":[["yes","no","no","no","dk","yes","no","no","yes","dk"],["no","no","no","no"],["yes","yes","yes","no","no","no","yes","yes","no","yes","yes","yes","no","dk"],["yes","no","dk","no","dk","dk","yes","no","no","no","dk","dk","no"],["no","no","yes","no","no","yes","no","yes","no","dk","yes","no","no","no","no"],["no","no","no","no","no"],["no","no"],["no","no","no"]],"Cambodia":[["yes","yes","no","no","dk","no","yes","no","no","dk"],["yes","dk","dk","yes"],["dk","dk","no","no","yes","yes","no","no","dk","yes","no","no","no","no"],["yes","no","dk","yes","no","yes","yes","no","dk","dk","no","no","yes"],["yes","yes","yes","no","no","yes","yes","yes","no","yes","no","no","no","no","no"],["no","no","yes","yes","dk"],["no","no"],["no","no","yes"]],"Samoa":[["yes","yes","no","no","dk","no","no","yes","yes","yes"],["yes","yes","yes","yes"],["no","no","no","no","yes","yes","yes","yes","no","yes","yes","no","no","no"],["no","no","dk","no","no","yes","yes","yes","yes","yes","no","yes","yes"],["yes","yes","no","yes","yes","yes","yes","yes","yes","yes","yes","no","no","yes","no"],["no","no","no","yes","yes"],["no","no"],["dk","no","no"]],"Cook Islands":[["no","no","no","no","dk","yes","yes","no","yes","yes"],["yes","no","no","yes"],["no","no","no","yes","no","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","no","no","no","no","yes","yes","no","no","no","no","yes","yes"],["no","yes","yes","yes","yes","no","no","no","no","no","no","no","yes","no","no"],["no","no","no","no","no"],["no","no"],["no","yes","no"]],"Lao PDR":[["yes","yes","no","no","dk","dk","yes","yes","no","no"],["yes","yes","no","yes"],["yes","yes","yes","yes","no","yes","no","yes","dk","yes","no","yes","no","no"],["no","no","dk","no","no","yes","yes","no","no","no","no","yes","no"],["yes","no","no","dk","dk","no","no","no","no","no","no","no","yes","no","no"],["no","no","no","no","no"],["no","no"],["yes","no","no"]],"Papua New Guinea":[["no","no","no","no","no","no","no","no","no","dk"],["no","dk","no","yes"],["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","no","yes","yes","yes"],["no","no","dk","no","no","no","no","no","dk","dk","no","yes","dk"],["no","no","no","no","no","no","no","no","dk","no","no","no","no","no","no"],["no","no","no","no","dk"],["no","no"],["no","yes","no"]],"Marshall Islands":[["dk","dk","dk","dk","no","dk","yes","dk","no","dk"],["yes","no","no","yes"],["yes","yes","dk","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["dk","dk","no","no","no","no","yes","dk","yes","yes","dk","yes","no"],["yes","yes","yes","yes","yes","yes","yes","yes","yes","dk","no","no","yes","yes","yes"],["yes","yes","yes","yes","yes"],["yes","dk"],["dk","yes","dk"]],"Tonga":[["no","dk","no","no","no","dk","no","dk","yes","dk"],["dk","no","dk","yes"],["no","dk","dk","dk","dk","no","dk","dk","dk","dk","no","yes","dk","dk"],["no","yes","dk","dk","dk","yes","no","no","dk","dk","no","yes","dk"],["no","dk","dk","dk","dk","yes","yes","yes","dk","yes","no","yes","yes","yes","no"],["dk","dk","dk","yes","dk"],["no","no"],["dk","yes","dk"]],"Tuvalu":[["yes","yes","dk","yes","dk","no","yes","dk","no","no"],["yes","yes","no","no"],["dk","dk","no","dk","yes","yes","dk","yes","dk","yes","dk","yes","dk","no"],["no","no","dk","no","dk","dk","yes","dk","no","yes","yes","dk","dk"],["no","yes","yes","dk","dk","yes","no","no","dk","yes","no","no","no","yes","yes"],["dk","yes","dk","no","no"],["dk","no"],["dk","yes","dk"]],"Malaysia":[["yes","no","no","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","dk","yes"],["yes","yes","yes","dk","yes","yes","yes","yes","dk","yes","yes","yes","yes","yes"],["yes","no","dk","no","no","yes","yes","yes","dk","dk","yes","yes","dk"],["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","no","yes","yes","yes","yes"],["yes","yes","yes","yes","yes"],["no","dk"],["no","no","no"]],"Brunei":[["no","no","no","no","dk","dk","no","no","yes","dk"],["yes","yes","dk","yes"],["no","no","no","no","no","yes","dk","dk","no","yes","dk","no","no","no"],["dk","no","dk","dk","dk","no","no","no","dk","dk","no","yes","no"],["no","no","no","dk","dk","no","yes","no","dk","no","no","no","yes","no","no"],["no","no","no","yes","yes"],["no","no"],["no","no","no"]],"Vanuatu":[["dk","dk","dk","no","dk","dk","no","dk","no","dk"],["dk","dk","dk","yes"],["dk","dk","dk","no","dk","yes","dk","dk","dk","yes","dk","yes","dk","dk"],["no","no","dk","dk","dk","no","dk","no","dk","dk","no","no","dk"],["no","no","no","dk","dk","yes","dk","no","dk","dk","dk","no","dk","dk","dk"],["no","no","dk","dk","dk"],["dk","dk"],["no","dk","dk"]],"Solomon Islands":[["no","no","no","yes","dk","no","no","no","no","dk"],["no","yes","no","yes"],["yes","yes","no","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["no","no","no","no","no","yes","yes","no","yes","dk","no","yes","yes"],["no","yes","yes","no","no","yes","yes","no","no","yes","no","no","no","no","no"],["no","no","no","no","no"],["no","no"],["yes","yes","yes"]],"China":[["yes","yes","yes","yes","yes","yes","yes","yes","dk","dk"],["yes","dk","no","yes"],["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","dk","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","yes","yes","no","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","yes","yes","dk"],["yes","dk"],["yes","no","no"]],"Mongolia":[["yes","yes","dk","dk","dk","no","yes","yes","no","dk"],["dk","dk","dk","yes"],["no","dk","no","yes","yes","yes","dk","yes","dk","yes","yes","yes","dk","yes"],["yes","yes","dk","yes","dk","dk","yes","yes","dk","dk","dk","yes","dk"],["no","yes","yes","dk","dk","yes","yes","dk","dk","yes","no","no","no","yes","dk"],["no","yes","no","yes","dk"],["yes","no"],["no","yes","no"]],"Macao SAR":[["no","yes","dk","no","yes","yes","no","yes","yes","dk"],["yes","yes","dk","no"],["no","no","no","no","yes","no","yes","yes","no","yes","yes","yes","yes","yes"],["yes","yes","dk","dk","dk","yes","yes","no","dk","dk","yes","yes","dk"],["no","no","no","yes","dk","yes","no","no","dk","yes","no","no","yes","yes","yes"],["no","no","yes","yes","no"],["no","yes"],["no","yes","yes"]],"Hong Kong SAR":[["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","yes","yes"],["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","dk","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],["yes","yes","yes","yes","yes"],["yes","yes"],["yes","yes","yes"]],"Vietnam":[["yes","yes","no","no","dk","dk","yes","yes","no","dk"],["dk","dk","dk","yes"],["no","dk","dk","yes","yes","yes","dk","no","dk","yes","dk","dk","yes","dk"],["no","no","dk","no","no","no","no","no","dk","dk","no","yes","dk"],["yes","no","yes","dk","dk","yes","yes","yes","dk","yes","yes","no","no","no","yes"],["no","no","yes","dk","dk"],["no","no"],["no","no","yes"]],"Nauru":[["no","no","dk","no","dk","dk","yes","yes","yes","dk"],["dk","dk","dk","yes"],["dk","dk","dk","dk","no","no","dk","no","no","yes","yes","yes","dk","yes"],["no","yes","dk","no","no","no","yes","no","yes","no","yes","yes","yes"],["yes","no","yes","yes","yes","yes","yes","yes","no","no","no","no","no","no","no"],["no","no","yes","no","no"],["no","no"],["no","no","no"]],"Japan":[["yes","yes","no","no","dk","yes","no","yes","dk","dk"],["dk","dk","dk","yes"],["no","no","no","no","no","yes","yes","yes","dk","yes","dk","no","no","no"],["yes","dk","dk","dk","dk","dk","yes","yes","dk","dk","dk","dk","dk"],["no","yes","no","no","dk","yes","yes","yes","yes","yes","dk","yes","yes","yes","dk"],["dk","dk","dk","yes","dk"],["yes","dk"],["dk","dk","dk"]],"Indonesia":[["no","yes","yes","yes","dk","no","yes","yes","no","dk"],["yes","dk","dk","yes"],["no","yes","no","no","yes","yes","no","yes","yes","yes","yes","yes","no","no"],["yes","no","dk","no","no","no","no","no","dk","dk","no","yes","no"],["no","yes","yes","dk","dk","yes","yes","yes","dk","yes","no","no","yes","no","yes"],["yes","no","yes","yes","dk"],["no","no"],["no","no","no"]],"New Zealand":[["no","yes","no","yes","yes","yes","yes","yes","yes","dk"],["yes","dk","yes","yes"],["no","yes","no","yes","yes","yes","yes","no","yes","yes","yes","yes","yes","yes"],["yes","yes","dk","no","no","yes","yes","yes","dk","dk","yes","yes","yes"],["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","no","yes","no","yes"],["yes","no","yes","yes","yes"],["no","yes"],["yes","yes","yes"]],"Australia":[["no","yes","no","yes","dk","no","yes","yes","dk","dk"],["yes","dk","dk","yes"],["no","yes","no","yes","yes","yes","yes","dk","no","yes","yes","no","dk","yes"],["no","no","no","no","no","no","yes","no","yes","dk","no","no","dk"],["no","no","yes","dk","dk","yes","yes","yes","dk","yes","no","no","no","yes","dk"],["no","no","no","yes","dk"],["no","no"],["no","no","no"]]};
 
+function gapToggleDesc(hdr){
+  const card=hdr.parentElement;const body=card.lastElementChild;if(!body)return;
+  const open=body.style.display==='none';body.style.display=open?'block':'none';
+  const ic=hdr.querySelector('.desc-tog');if(ic)ic.textContent=open?'−':'+';
+}
 function renderIndicatorProfile(countryName){
   const data=INDICATORS[countryName];
   if(!data){document.getElementById('indPanel').style.display='none';return}
@@ -1320,7 +1327,7 @@ function renderIndicatorProfile(countryName){
 
     return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)">
       <!-- SD header -->
-      <div style="background:var(--navy);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div onclick="gapToggleDesc(this)" style="background:var(--navy);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="background:${headCol};color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">SD${sdN}</span>
           <span style="font-size:12px;font-weight:700;color:#fff">${sdShortName}</span>
@@ -1328,6 +1335,7 @@ function renderIndicatorProfile(countryName){
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
           <span style="font-size:10px;color:rgba(255,255,255,.6)">${yCount}✓ ${nCount}✕ ${dkCount}?</span>
           <span style="font-size:12px;font-weight:700;color:${headCol==='#0F7A5A'?'#6ee7b7':headCol==='#D85A1A'?'#fed7aa':'#fca5a5'}">${pct}%</span>
+          <span class="desc-tog">+</span>
         </div>
       </div>
       <!-- Mini bar -->
@@ -1335,7 +1343,7 @@ function renderIndicatorProfile(countryName){
         <div style="height:100%;background:${headCol};width:${pct}%;transition:width .6s"></div>
       </div>
       <!-- Indicators list -->
-      <div style="padding:10px 12px">${rows}</div>
+      <div style="padding:10px 12px;display:none">${rows}</div>
     </div>`;
   }).join('');
 
@@ -1359,7 +1367,7 @@ function renderIndicatorProfile(countryName){
 }
 
 /* ══ BY COUNTRY ══ */
-let ctGrpFilter='ALL', ctSortMode='avg', ctSelectedN=null;
+let ctGrpFilter='ALL', ctSortMode='name', ctSelectedN=null;
 const INC_LBL={HI:'High Income',UMI:'Upper-Middle',LMI:'Lower-Middle',LI:'Low Income'};
 
 function getFilteredSorted(){

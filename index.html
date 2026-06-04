@@ -79,7 +79,7 @@ h1{max-width:780px;color:#fff;font-size:clamp(38px,5.8vw,72px);line-height:1.03;
     <div class="brand"><img class="brand-logo" src="photos/who-wpro-logo-blue.png" alt="World Health Organization Western Pacific Region"><span class="brand-sep"></span><span class="brand-dot"></span>WHO WPRO &middot; IPC Monitoring Dashboards</div>
     <h1>IPC Monitoring Dashboard Hub</h1>
     <p class="lead">Select a program view to evaluate progress on the Global Action Plan and Monitoring Framework (GAPME) for IPC, alongside National and Facility-level Healthcare-Associated Infection (HAI) surveillance across 25 WPRO countries and areas.</p>
-    <div class="programs" aria-label="Programme selection">
+    <div class="programs" style="grid-template-columns:repeat(2,minmax(0,1fr))" aria-label="Programme selection">
       <button class="program gapme" type="button" onclick="openProgram('gapme')">
         <img class="program-img" src="photos/IPC background.jpg" alt="">
         <span class="program-shade" aria-hidden="true"></span>
@@ -90,23 +90,13 @@ h1{max-width:780px;color:#fff;font-size:clamp(38px,5.8vw,72px);line-height:1.03;
           <span class="program-action">Open dashboard</span>
         </span>
       </button>
-      <button class="program national" type="button" onclick="openProgram('national')">
+      <button class="program national" type="button" onclick="openProgram('hai')">
         <img class="program-img" src="photos/Screenshot 2024-11-20 122628.png" alt="">
         <span class="program-shade" aria-hidden="true"></span>
         <span class="program-body">
           <span class="program-kicker">Programme 2</span>
-          <span class="program-title">HAI National</span>
-          <span class="program-copy">Regional, country, and income-group views for national HAI surveillance capacity.</span>
-          <span class="program-action">Open dashboard</span>
-        </span>
-      </button>
-      <button class="program facility" type="button" onclick="openProgram('facility')">
-        <img class="program-img" src="photos/8170.jpg" alt="">
-        <span class="program-shade" aria-hidden="true"></span>
-        <span class="program-body">
-          <span class="program-kicker">Programme 3</span>
-          <span class="program-title">HAI Facility</span>
-          <span class="program-copy">Facility-level overview, country profiles, and level-of-care indicator tables.</span>
+          <span class="program-title">HAI Surveillance</span>
+          <span class="program-copy">National capacity &amp; facility-level results — Overview, By Country, By Income, and By Facility Level across 23 WPRO countries.</span>
           <span class="program-action">Open dashboard</span>
         </span>
       </button>
@@ -120,8 +110,7 @@ h1{max-width:780px;color:#fff;font-size:clamp(38px,5.8vw,72px);line-height:1.03;
     <div class="switcher">
       <button class="home-btn" type="button" onclick="showLanding()">Programme menu</button>
       <button class="switch-btn" id="btnGapme" type="button" onclick="openProgram('gapme')">GAPME</button>
-      <button class="switch-btn" id="btnNational" type="button" onclick="openProgram('national')">HAI National</button>
-      <button class="switch-btn" id="btnFacility" type="button" onclick="openProgram('facility')">HAI Facility</button>
+      <button class="switch-btn" id="btnHai" type="button" onclick="openProgram('hai')">HAI Surveillance</button>
     </div>
   </header>
   <div class="frame-wrap">
@@ -131,16 +120,14 @@ h1{max-width:780px;color:#fff;font-size:clamp(38px,5.8vw,72px);line-height:1.03;
 
 <script>
 const PROGRAMMES={
-  national:{file:'hai_dashboard.html'},
-  facility:{file:'hai_facility_dashboard.html'},
+  hai:{file:'hai_combined.html'},
   gapme:{file:'GAPME.html'}
 };
 function openProgram(key){
   const p=PROGRAMMES[key]||PROGRAMMES.national;
   document.getElementById('landing').style.display='none';
   document.getElementById('shell').style.display='block';
-  document.getElementById('btnNational').classList.toggle('on',key==='national');
-  document.getElementById('btnFacility').classList.toggle('on',key==='facility');
+  document.getElementById('btnHai').classList.toggle('on',key==='hai');
   document.getElementById('btnGapme').classList.toggle('on',key==='gapme');
   const frame=document.getElementById('dashFrame');
   if(!frame.src.endsWith(p.file)) frame.src=p.file;

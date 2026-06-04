@@ -2523,33 +2523,33 @@ window.__HAI_FACILITY_DATA__ = {
         {
           "key": "t2_i8",
           "code": "2.8",
-          "label": "Integration of HAI surveillance with other facility surveillance programmes",
+          "label": "Fully and partially integrated",
           "question": "If there is an active facility HAI surveillance programme (i.e., you answered “Yes” to Question 25), Is the facility HAI survei",
-          "option": "Fully integrated",
+          "option": "Fully and partially integrated",
           "column": 10
         },
         {
           "key": "t2_i9",
           "code": "2.9",
-          "label": "Partially integrated",
+          "label": "Fully integrated",
           "question": "If there is an active facility HAI surveillance programme (i.e., you answered “Yes” to Question 25), Is the facility HAI survei",
-          "option": "Partially integrated",
+          "option": "Fully integrated",
           "column": 11
         },
         {
           "key": "t2_i10",
           "code": "2.10",
-          "label": "No integrated",
+          "label": "Partially integrated",
           "question": "If there is an active facility HAI surveillance programme (i.e., you answered “Yes” to Question 25), Is the facility HAI survei",
-          "option": "No integrated",
+          "option": "Partially integrated",
           "column": 12
         },
         {
           "key": "t2_i11",
           "code": "2.11",
-          "label": "No other facility surveillance programmes exist",
+          "label": "No Integrated",
           "question": "If there is an active facility HAI surveillance programme (i.e., you answered “Yes” to Question 25), Is the facility HAI survei",
-          "option": "No other facility surveillance programmes exist",
+          "option": "No Integrated",
           "column": 13
         },
         {

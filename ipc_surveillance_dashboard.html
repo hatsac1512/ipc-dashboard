@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>WPRO IPC & HAI Surveillance Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="assets/vendor/echarts.min.js"></script>
+<script src="./data_sheet1.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel2: #273449;
+    --muted: #94a3b8;
+    --text: #e2e8f0;
+    --accent: #38bdf8;
+    --accent2: #f472b6;
+    --warn: #f59e0b;
+    --bad: #ef4444;
+    --good: #22c55e;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.45 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+  header { padding: 16px 24px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  main { padding: 16px 24px 80px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .kpi .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi .value { font-size: 24px; font-weight: 600; margin-top: 4px; }
+  .kpi .hint { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .section { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+  .section h2 { margin: 0 0 4px; font-size: 15px; }
+  .section p.desc { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .controls label { color: var(--muted); font-size: 12px; }
+  select, button { background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; font-size: 12px; }
+  button { cursor: pointer; }
+  button.active { background: var(--accent); color: #0b1220; border-color: var(--accent); }
+  button:hover:not(.active) { border-color: var(--accent); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .tabs button { padding: 6px 10px; }
+  .chart { width: 100%; height: 480px; }
+  .chart.tall { height: 620px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+  table.dq { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.dq th, table.dq td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+  table.dq th { color: var(--muted); font-weight: 500; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 11px; margin-right: 4px; }
+  .b-warn { background: rgba(245,158,11,.18); color: var(--warn); border: 1px solid rgba(245,158,11,.3); }
+  .b-bad  { background: rgba(239,68,68,.18); color: var(--bad); border: 1px solid rgba(239,68,68,.3); }
+  .b-info { background: rgba(56,189,248,.18); color: var(--accent); border: 1px solid rgba(56,189,248,.3); }
+  footer { color: var(--muted); font-size: 11px; padding: 16px 24px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>WPRO IPC & HAI Surveillance Dashboard</h1>
+    <div class="sub" id="meta-sub">Loading…</div>
+  </div>
+  <div class="sub">Source: 2.Updated_summaries HAI facility_Apr2026.xlsx / Sheet1 · Built by generated data_sheet1.js</div>
+</header>
+
+<main>
+  <!-- A. KPI banner -->
+  <section class="kpi-row" id="kpi-row"></section>
+
+  <!-- B. Heatmap -->
+  <section class="section">
+    <h2>B · Capacity Heatmap — Quốc gia × Chỉ số</h2>
+    <p class="desc">Màu càng xanh = % đáp án "Yes" càng cao. Bấm bảng để đổi bộ chỉ số.</p>
+    <div class="controls">
+      <label>Bảng:</label>
+      <select id="heatmap-table"></select>
+      <label>Sắp xếp:</label>
+      <button data-sort="name" class="active">A→Z</button>
+      <button data-sort="pct">Theo điểm trung bình</button>
+      <button data-sort="income">Theo income</button>
+    </div>
+    <div id="heatmap" class="chart tall"></div>
+  </section>
+
+  <!-- C. Drilldown tabs -->
+  <section class="section">
+    <h2>C · Drilldown theo từng bảng</h2>
+    <p class="desc">Chọn bảng, chọn chỉ số — so sánh các quốc gia.</p>
+    <div class="tabs" id="drill-tabs"></div>
+    <div class="controls">
+      <label>Chỉ số:</label>
+      <select id="drill-indicator"></select>
+      <label>Lọc:</label>
+      <select id="drill-income">
+        <option value="all">Tất cả</option>
+        <option value="HICs">HICs</option>
+        <option value="L&amp;MICs">L&MICs</option>
+      </select>
+    </div>
+    <div id="drill-chart" class="chart"></div>
+  </section>
+
+  <!-- D. Vietnam spotlight -->
+  <section class="section">
+    <h2>D · Vietnam Spotlight — Ảnh hưởng của Vietnam lên tổng WPRO</h2>
+    <p class="desc">Mỗi thanh là một chỉ số. <b>Xanh dương</b> = Vietnam, <b>hồng</b> = WPRO (không tính Vietnam). Khoảng cách càng xa = Vietnam càng "kéo lệch" con số khu vực.</p>
+    <div class="controls">
+      <label>Bảng:</label>
+      <select id="vn-table"></select>
+    </div>
+    <div id="vn-chart" class="chart tall"></div>
+  </section>
+
+  <!-- E. Tertiary vs Secondary -->
+  <section class="section">
+    <h2>E · Tertiary vs Secondary — So sánh tuyến</h2>
+    <p class="desc">Các chỉ số đầu của mỗi bảng (lấy chỉ số đầu tiên làm đại diện). Radar cho thấy khoảng cách tuyến.</p>
+    <div id="ts-chart" class="chart"></div>
+  </section>
+
+  <!-- F. Gap ranking -->
+  <section class="section">
+    <h2>F · Regional Gap Ranking — Chỉ số nào toàn khu vực yếu nhất</h2>
+    <p class="desc">Xếp hạng tất cả chỉ số toàn bộ 10 bảng theo % WPRO. Top danh sách = cần can thiệp trước.</p>
+    <div class="controls">
+      <label>Dùng con số:</label>
+      <button data-gap="wpro" class="active">WPRO (có VN)</button>
+      <button data-gap="wpro_excl_vn">WPRO (không có VN)</button>
+      <label>Số dòng:</label>
+      <select id="gap-limit">
+        <option>15</option><option selected>25</option><option>40</option><option>999</option>
+      </select>
+    </div>
+    <div id="gap-chart" class="chart tall"></div>
+  </section>
+
+  <!-- G. Data quality -->
+  <section class="section">
+    <h2>G · Data Quality Panel</h2>
+    <p class="desc">Các mẫu nhỏ (n&lt;5), chỉ số bị Vietnam thống trị (≥60% mẫu), và ô thiếu.</p>
+    <div class="grid-2">
+      <div>
+        <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);">Cờ cảnh báo theo bảng</h3>
+        <table class="dq" id="dq-summary"></table>
+      </div>
+      <div>
+        <h3 style="font-size:13px;margin:0 0 8px;color:var(--muted);">Top 10 cặp (quốc gia × chỉ số) có mẫu nhỏ</h3>
+        <table class="dq" id="dq-smalln"></table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Dashboard review: data reviewer agent · data gốc từ WPRO survey 2023–24 (23 quốc gia, 604 cơ sở).
+  Ghi chú: Vietnam chiếm 76.5% mẫu → luôn nên xem kèm "WPRO không có VN". Cook Islands xếp HIC cần kiểm chứng lại với World Bank.
+</footer>
+
+<script>
+const D = window.__SHEET1_DATA__;
+const FMT = { pct: v => (v==null? '—' : v.toFixed(1)+'%') };
+
+/* ---------- utilities ---------- */
+function el(id){ return document.getElementById(id); }
+function opt(val,label,sel=false){ return `<option value="${val}"${sel?' selected':''}>${label}</option>`; }
+
+function incomeColor(inc){
+  return inc === 'HICs' ? '#38bdf8' : '#f472b6';
+}
+
+function pctColor(v){
+  if (v == null) return '#475569';
+  const stops = [[0,'#7f1d1d'],[30,'#dc2626'],[55,'#f59e0b'],[75,'#84cc16'],[100,'#16a34a']];
+  for (let i=0;i<stops.length-1;i++){
+    const [a,ca]=stops[i],[b,cb]=stops[i+1];
+    if (v<=b){ const t=(v-a)/(b-a||1); return mix(ca,cb,t); }
+  }
+  return stops[stops.length-1][1];
+}
+function mix(c1,c2,t){
+  const p=c=>c.match(/\w\w/g).map(x=>parseInt(x,16));
+  const a=p(c1.slice(1)),b=p(c2.slice(1));
+  return '#'+a.map((v,i)=>Math.round(v+(b[i]-v)*t).toString(16).padStart(2,'0')).join('');
+}
+
+/* ---------- A. KPI ---------- */
+function renderKPI(){
+  const totalFac = D.meta.n_facilities;
+  const vn = D.summary['Vietnam']?.total || 0;
+  const hic = Object.values(D.summary).filter(s=>s.income==='HICs').length;
+  const lmic = Object.values(D.summary).filter(s=>s.income==='L&MICs').length;
+
+  // mean of Table 10 WPRO across 8 indicators
+  const t10 = D.tables.find(t=>t.table_no===10);
+  const means = t10.indicators.map(i => t10.aggregates.wpro[i.key]?.pct).filter(v=>v!=null);
+  const meanWpro = means.reduce((a,b)=>a+b,0)/means.length;
+  const meansX = t10.indicators.map(i => t10.aggregates.wpro_excl_vn[i.key]?.pct).filter(v=>v!=null);
+  const meanX = meansX.reduce((a,b)=>a+b,0)/meansX.length;
+
+  const kpis = [
+    { label:'Quốc gia', value:D.meta.n_countries, hint:`${hic} HICs · ${lmic} L&MICs` },
+    { label:'Cơ sở y tế', value:totalFac.toLocaleString(), hint:'Tertiary + Secondary' },
+    { label:'Tỉ lệ Vietnam', value: ((vn/totalFac)*100).toFixed(1)+'%', hint:`${vn.toLocaleString()} / ${totalFac.toLocaleString()} cơ sở` },
+    { label:'Bảng chỉ số', value:D.meta.tables, hint:'IPC + HAI surveillance' },
+    { label:'TB năng lực WPRO', value:meanWpro.toFixed(1)+'%', hint:'8 chỉ số Table 10 (có VN)' },
+    { label:'TB năng lực WPRO ex-VN', value:meanX.toFixed(1)+'%', hint:`Δ ${(meanX-meanWpro).toFixed(1)} điểm khi bỏ VN` },
+  ];
+  el('kpi-row').innerHTML = kpis.map(k=>`
+    <div class="kpi">
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      <div class="hint">${k.hint}</div>
+    </div>`).join('');
+  el('meta-sub').textContent = `${D.meta.n_countries} quốc gia · ${totalFac.toLocaleString()} cơ sở · ${D.meta.tables} bảng chỉ số`;
+}
+
+/* ---------- B. Heatmap ---------- */
+const heatmap = echarts.init(el('heatmap'));
+let heatSort = 'name';
+
+function tableOptions(){ return D.tables.map(t => opt(t.table_no, `Table ${t.table_no} — ${t.title.slice(0,55)}`, t.table_no===10)).join(''); }
+
+function renderHeatmap(){
+  const tnum = Number(el('heatmap-table').value);
+  const T = D.tables.find(t=>t.table_no===tnum);
+  const inds = T.indicators;
+  let countries = T.countries.slice();
+
+  if (heatSort==='name') countries.sort((a,b)=>a.country.localeCompare(b.country));
+  else if (heatSort==='income') countries.sort((a,b)=>(a.income||'').localeCompare(b.income||'')||a.country.localeCompare(b.country));
+  else if (heatSort==='pct'){
+    countries.forEach(c=>{
+      const vs = inds.map(i=>c.values[i.key]?.pct).filter(v=>v!=null);
+      c._mean = vs.length? vs.reduce((a,b)=>a+b,0)/vs.length : -1;
+    });
+    countries.sort((a,b)=>b._mean-a._mean);
+  }
+
+  const yNames = countries.map(c=>c.country + (c.income==='HICs'?' ◆':''));
+  const xNames = inds.map(i=>`${i.label||''}${i.option?' · '+i.option:''}`.slice(0,50));
+  const data = [];
+  countries.forEach((c,yi)=>{
+    inds.forEach((ind,xi)=>{
+      const v = c.values[ind.key];
+      data.push([xi, yi, v?.pct ?? null, v?.raw ?? '—', c.country, ind.label, ind.option]);
+    });
+  });
+
+  heatmap.setOption({
+    tooltip:{ formatter: p => `<b>${p.value[4]}</b><br>${p.value[5]||''} — ${p.value[6]||''}<br>${p.value[3]} ${p.value[2]!=null?'('+p.value[2].toFixed(1)+'%)':''}` },
+    grid:{ left:180, right:30, top:140, bottom:50 },
+    xAxis:{ type:'category', data:xNames, axisLabel:{ color:'#cbd5e1', rotate:40, fontSize:10, interval:0 }, splitArea:{show:true} },
+    yAxis:{ type:'category', data:yNames, axisLabel:{ color:'#cbd5e1', fontSize:11 }, splitArea:{show:true} },
+    visualMap:{ min:0,max:100, calculable:true, orient:'horizontal', left:'center', top:10,
+      inRange:{ color:['#7f1d1d','#dc2626','#f59e0b','#84cc16','#16a34a'] },
+      textStyle:{color:'#cbd5e1'} },
+    series:[{ type:'heatmap', data, label:{ show:true, formatter: p => (p.value[2]==null?'':Math.round(p.value[2])),
+      color:'#0b1220', fontSize:10 }, emphasis:{ itemStyle:{ shadowBlur:10, shadowColor:'#38bdf8' }}}],
+  }, true);
+}
+el('heatmap-table').innerHTML = tableOptions();
+renderHeatmap();
+el('heatmap-table').addEventListener('change', renderHeatmap);
+document.querySelectorAll('[data-sort]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-sort]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); heatSort = b.dataset.sort; renderHeatmap();
+  });
+});
+
+/* ---------- C. Drilldown ---------- */
+const drill = echarts.init(el('drill-chart'));
+let drillTable = 1, drillIndKey = null;
+function renderTabs(){
+  el('drill-tabs').innerHTML = D.tables.map(t=>`<button data-t="${t.table_no}"${t.table_no===drillTable?' class="active"':''}>Table ${t.table_no}</button>`).join('');
+  document.querySelectorAll('#drill-tabs button').forEach(b=>{
+    b.addEventListener('click', ()=>{ drillTable = Number(b.dataset.t); drillIndKey=null; renderTabs(); renderDrillIndicators(); renderDrill(); });
+  });
+}
+function renderDrillIndicators(){
+  const T = D.tables.find(t=>t.table_no===drillTable);
+  el('drill-indicator').innerHTML = T.indicators.map((i,idx)=>opt(i.key, `${i.label||'(nhóm '+idx+')'} · ${i.option||''}`, i.key===(drillIndKey||T.indicators[0].key))).join('');
+  drillIndKey = el('drill-indicator').value;
+}
+function renderDrill(){
+  const T = D.tables.find(t=>t.table_no===drillTable);
+  drillIndKey = el('drill-indicator').value;
+  const incFilter = el('drill-income').value;
+  let rows = T.countries.filter(c => incFilter==='all' || c.income===incFilter);
+  rows = rows.filter(c => c.values[drillIndKey]?.pct != null);
+  rows.sort((a,b)=> (b.values[drillIndKey].pct||0) - (a.values[drillIndKey].pct||0));
+
+  const wpro = T.aggregates.wpro[drillIndKey]?.pct;
+  const wproX = T.aggregates.wpro_excl_vn[drillIndKey]?.pct;
+  const ind = T.indicators.find(i=>i.key===drillIndKey);
+
+  drill.setOption({
+    title:{ text: `${ind.label||''} — ${ind.option||''}`, left:'center', textStyle:{color:'#e2e8f0', fontSize:13}, subtext: ind.question||'', subtextStyle:{color:'#94a3b8', fontSize:11} },
+    tooltip:{ trigger:'axis', formatter: (a)=>{ const p=a[0]; const raw=rows[p.dataIndex].values[drillIndKey].raw; return `<b>${p.name}</b><br>${raw}` }},
+    grid:{ left:140, right:40, top:70, bottom:30 },
+    xAxis:{ type:'value', max:100, axisLabel:{color:'#cbd5e1', formatter:'{value}%'}, splitLine:{lineStyle:{color:'#334155'}} },
+    yAxis:{ type:'category', data: rows.map(r=>r.country), axisLabel:{color:'#cbd5e1', fontSize:11} },
+    series:[
+      { type:'bar', data: rows.map(r=>({ value: r.values[drillIndKey].pct, itemStyle:{ color: incomeColor(r.income) }, })),
+        label:{ show:true, position:'right', formatter: p => p.value.toFixed(1)+'%', color:'#cbd5e1', fontSize:10 },
+        markLine:{ symbol:'none', data:[
+          { xAxis: wpro,  lineStyle:{color:'#38bdf8',type:'dashed'}, label:{formatter:'WPRO '+(wpro?wpro.toFixed(1):'-')+'%', color:'#38bdf8', position:'end'}},
+          { xAxis: wproX, lineStyle:{color:'#f472b6',type:'dashed'}, label:{formatter:'ex-VN '+(wproX?wproX.toFixed(1):'-')+'%', color:'#f472b6', position:'end'}},
+        ]}
+      }
+    ]
+  }, true);
+}
+renderTabs(); renderDrillIndicators(); renderDrill();
+el('drill-indicator').addEventListener('change', renderDrill);
+el('drill-income').addEventListener('change', renderDrill);
+
+/* ---------- D. Vietnam spotlight ---------- */
+const vn = echarts.init(el('vn-chart'));
+el('vn-table').innerHTML = tableOptions();
+function renderVN(){
+  const tnum = Number(el('vn-table').value);
+  const T = D.tables.find(t=>t.table_no===tnum);
+  const vnRow = T.countries.find(c=>c.country==='Vietnam');
+  const inds = T.indicators.filter(i=>T.aggregates.wpro[i.key]?.pct != null);
+  const cats = inds.map(i=>`${i.label||''}${i.option?' · '+i.option:''}`.slice(0,60));
+
+  vn.setOption({
+    tooltip:{ trigger:'axis' },
+    legend:{ top:10, textStyle:{color:'#cbd5e1'} },
+    grid:{ left:260, right:40, top:50, bottom:20 },
+    xAxis:{ type:'value', max:100, axisLabel:{color:'#cbd5e1', formatter:'{value}%'}, splitLine:{lineStyle:{color:'#334155'}} },
+    yAxis:{ type:'category', data: cats, axisLabel:{color:'#cbd5e1', fontSize:10, width:250, overflow:'truncate'} },
+    series:[
+      { name:'Vietnam', type:'scatter', symbolSize:12, itemStyle:{color:'#38bdf8'},
+        data: inds.map(i=>vnRow?.values[i.key]?.pct ?? null) },
+      { name:'WPRO (không VN)', type:'scatter', symbolSize:12, itemStyle:{color:'#f472b6'},
+        data: inds.map(i=>T.aggregates.wpro_excl_vn[i.key]?.pct ?? null) },
+      { name:'Δ (gap)', type:'bar', barWidth:2,
+        data: inds.map(i=>{
+          const a = vnRow?.values[i.key]?.pct ?? null;
+          const b = T.aggregates.wpro_excl_vn[i.key]?.pct ?? null;
+          if (a==null||b==null) return 0;
+          return Math.max(a,b);
+        }),
+        itemStyle:{ color:'#475569' }, z: 1
+      }
+    ]
+  }, true);
+}
+renderVN();
+el('vn-table').addEventListener('change', renderVN);
+
+/* ---------- E. Tertiary vs Secondary ---------- */
+const ts = echarts.init(el('ts-chart'));
+function renderTS(){
+  // Pick first indicator of each table (usually the headline "Yes")
+  const indicators = D.tables.map(t => {
+    const first = t.indicators.find(i=>t.level_aggregates?.tertiary?.[i.key]?.pct != null) || t.indicators[0];
+    return { table: t, ind: first };
+  });
+  const cats = indicators.map(x => `T${x.table.table_no}: ${x.ind.label?.slice(0,24) || '—'}`);
+  const tvals = indicators.map(x => x.table.level_aggregates?.tertiary?.[x.ind.key]?.pct ?? 0);
+  const svals = indicators.map(x => x.table.level_aggregates?.secondary?.[x.ind.key]?.pct ?? 0);
+
+  ts.setOption({
+    tooltip:{},
+    legend:{ top:10, textStyle:{color:'#cbd5e1'} },
+    radar:{ indicator: cats.map(c=>({name:c, max:100})),
+      axisName:{ color:'#cbd5e1', fontSize:10 },
+      splitLine:{ lineStyle:{color:'#334155'} },
+      splitArea:{ areaStyle:{color:['rgba(255,255,255,0.02)','rgba(255,255,255,0.05)']} },
+      axisLine:{lineStyle:{color:'#334155'}} },
+    series:[{
+      type:'radar',
+      data:[
+        { value: tvals, name:'Tertiary', areaStyle:{color:'rgba(56,189,248,.25)'}, lineStyle:{color:'#38bdf8'} },
+        { value: svals, name:'Secondary', areaStyle:{color:'rgba(244,114,182,.2)'}, lineStyle:{color:'#f472b6'} },
+      ]
+    }]
+  }, true);
+}
+renderTS();
+
+/* ---------- F. Gap ranking ---------- */
+const gap = echarts.init(el('gap-chart'));
+let gapKey = 'wpro';
+function renderGap(){
+  const limit = Number(el('gap-limit').value);
+  const rows = [];
+  D.tables.forEach(t=>{
+    t.indicators.forEach(i=>{
+      const a = t.aggregates[gapKey][i.key];
+      if (!a || a.pct == null) return;
+      rows.push({ label: `T${t.table_no}: ${i.label?.slice(0,40)||''} · ${i.option||''}`, pct: a.pct, num:a.num, den:a.den });
+    });
+  });
+  rows.sort((a,b)=>a.pct-b.pct);
+  const top = rows.slice(0, limit);
+
+  gap.setOption({
+    tooltip:{ formatter: p => `<b>${p.name}</b><br>${p.value.toFixed(1)}% (${top[p.dataIndex].num}/${top[p.dataIndex].den})` },
+    grid:{ left:380, right:30, top:20, bottom:20 },
+    xAxis:{ type:'value', max:100, axisLabel:{color:'#cbd5e1', formatter:'{value}%'}, splitLine:{lineStyle:{color:'#334155'}} },
+    yAxis:{ type:'category', inverse:true, data: top.map(r=>r.label),
+      axisLabel:{color:'#cbd5e1', fontSize:10, width:370, overflow:'truncate'} },
+    series:[{ type:'bar', data: top.map(r=>({ value:r.pct, itemStyle:{color: pctColor(r.pct)}})),
+      label:{show:true, position:'right', color:'#cbd5e1', fontSize:10, formatter: p => p.value.toFixed(1)+'%'} }]
+  }, true);
+}
+renderGap();
+document.querySelectorAll('[data-gap]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-gap]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); gapKey = b.dataset.gap; renderGap();
+  });
+});
+el('gap-limit').addEventListener('change', renderGap);
+
+/* ---------- G. Data Quality ---------- */
+function renderDQ(){
+  const rows = [];
+  D.tables.forEach(t=>{
+    let smalln=0, missing=0, vnDom=0, cells=0;
+    t.countries.forEach(c=>{
+      Object.values(c.values).forEach(v=>{
+        cells++;
+        if (!v) { missing++; return; }
+        if (v.flags?.includes('small_n')) smalln++;
+        if (v.num == null) missing++;
+      });
+    });
+    t.indicators.forEach(i=>{ if ((i.flags||[]).includes('vn_dominant')) vnDom++; });
+    rows.push({ t: t.table_no, title:t.title.slice(0,50), smalln, missing, vnDom, cells });
+  });
+  el('dq-summary').innerHTML =
+    `<tr><th>Bảng</th><th>Ô mẫu nhỏ (n<5)</th><th>Ô thiếu / không parse</th><th>Chỉ số VN thống trị</th></tr>` +
+    rows.map(r=>`<tr>
+      <td>T${r.t} — ${r.title}</td>
+      <td>${r.smalln?`<span class="badge b-warn">${r.smalln}</span>`:'—'}</td>
+      <td>${r.missing?`<span class="badge b-bad">${r.missing}</span>`:'—'}</td>
+      <td>${r.vnDom?`<span class="badge b-info">${r.vnDom}</span>`:'—'}</td>
+    </tr>`).join('');
+
+  // Top small-n cells
+  const sm = [];
+  D.tables.forEach(t=>{
+    t.countries.forEach(c=>{
+      Object.entries(c.values).forEach(([k,v])=>{
+        if (v?.flags?.includes('small_n')){
+          const ind = t.indicators.find(i=>i.key===k);
+          sm.push({ country:c.country, table:t.table_no, label: ind?.label||k, raw:v.raw, den:v.den });
+        }
+      });
+    });
+  });
+  sm.sort((a,b)=>a.den-b.den);
+  el('dq-smalln').innerHTML =
+    `<tr><th>Quốc gia</th><th>Bảng</th><th>Chỉ số</th><th>Giá trị</th></tr>` +
+    sm.slice(0,10).map(r=>`<tr><td>${r.country}</td><td>T${r.table}</td><td>${r.label?.slice(0,40)||''}</td><td>${r.raw}</td></tr>`).join('');
+}
+renderDQ();
+renderKPI();
+
+/* ---------- Resize handling ---------- */
+window.addEventListener('resize', ()=>{
+  [heatmap, drill, vn, ts, gap].forEach(c=>c.resize());
+});
+</script>
+
+</body>
+</html>
