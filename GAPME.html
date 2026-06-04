@@ -371,6 +371,19 @@ body{font-size:16px;line-height:1.5}
 @media(max-width:380px){
   .ct-item{font-size:11px!important;padding:6px 10px!important}
 }
+/* ── MOBILE AUDIT ADDITIONS (additive, max-width only — desktop untouched) ── */
+@media(max-width:600px){
+  .radar-wrap{height:440px}          /* paired with reduced chart padding/fonts -> more usable plot area */
+  .tab{min-height:40px;display:inline-flex;align-items:center}
+  .dd-sel{min-height:42px}
+  .fpill,.sort-btn{min-height:36px;display:inline-flex;align-items:center}
+}
+@media(max-width:430px){
+  .radar-wrap{height:400px}
+}
+@media(max-width:380px){
+  .radar-wrap{height:360px}
+}
 </style>
 </head>
 <body>
@@ -856,7 +869,7 @@ function buildCharts(){
   /* Fig1 Radar */
   killCh('c1');
   const _gw=window.innerWidth;
-  const _gSm=_gw<=480,_gTiny=_gw<=380;
+  const _gSm=_gw<=600,_gTiny=_gw<=380;
   const _gPad=_gTiny?14:_gSm?38:76;
   const _gPLSize=_gTiny?9:_gSm?11:18;
   const _gPLPad=_gTiny?12:_gSm?20:36;
@@ -881,7 +894,7 @@ function buildCharts(){
           label:ctx=>`${ctx.parsed.r.toFixed(1)}% criteria met`
         }},
         datalabels:{display:true,color:'#111827',
-          font:{weight:'900',size:16},formatter:v=>v.toFixed(1)+'%',
+          font:{weight:'900',size:_gTiny?10:_gSm?12:16},formatter:v=>v.toFixed(1)+'%',
           anchor:'end',align:'end',offset:6,clip:false}
       },
       scales:{r:{beginAtZero:true,max:100,
@@ -962,7 +975,7 @@ function buildCharts(){
             usePointStyle:true,
             pointStyle:'rect',
             boxWidth:14,
-            padding:20
+            padding:window.innerWidth<600?8:20
           }
         },
         tooltip:{
@@ -974,7 +987,7 @@ function buildCharts(){
           align:'top',
           offset:2,
           color:ctx=>[P.orange,P.green,P.blue][ctx.datasetIndex],
-          font:{weight:'700',size:10,family:'Roboto, "Noto Sans", system-ui, sans-serif'},
+          font:{weight:'700',size:window.innerWidth<600?8:10,family:'Roboto, "Noto Sans", system-ui, sans-serif'},
           formatter:v=>v>0?v+'%':''
         }
       },
@@ -1517,7 +1530,7 @@ function selectCountry(name){
       {label:'WPRO Average',data:W,backgroundColor:'rgba(216,90,26,.07)',borderColor:HC.orange,borderWidth:2,pointBackgroundColor:HC.orange,pointRadius:3.5,pointHoverRadius:5,pointBorderColor:'#fff',pointBorderWidth:1.5,borderDash:[5,4]},
       {label:c.n,data:c.s,backgroundColor:'rgba(0,153,0,.09)',borderColor:'#009900',borderWidth:2.5,pointBackgroundColor:'#009900',pointRadius:3.5,pointHoverRadius:5,pointBorderColor:'#fff',pointBorderWidth:1.5}
     ]},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:56},plugins:{legend:{display:false},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex],label:ctx=>ctx.dataset.label+': '+fmtPct(ctx.raw)}},datalabels:{display:false}},scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20,font:{size:10},backdropColor:'rgba(238,241,246,.85)',color:HC.muted,callback:v=>v+'%'},pointLabels:{font:{size:10,weight:'700'},color:HC.navy},grid:{color:'rgba(0,63,92,.16)'},angleLines:{color:'rgba(0,63,92,.16)'}}}},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:window.innerWidth<600?14:56},plugins:{legend:{display:false},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex],label:ctx=>ctx.dataset.label+': '+fmtPct(ctx.raw)}},datalabels:{display:false}},scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20,font:{size:10},backdropColor:'rgba(238,241,246,.85)',color:HC.muted,callback:v=>v+'%'},pointLabels:{font:{size:10,weight:'700'},color:HC.navy},grid:{color:'rgba(0,63,92,.16)'},angleLines:{color:'rgba(0,63,92,.16)'}}}},
     plugins:[radarLabelPlugin]
   });
 
@@ -1529,7 +1542,7 @@ function selectCountry(name){
       {label:c.n,data:c.s,backgroundColor:HC.green,borderColor:HC.green,borderWidth:1,borderRadius:5,barPercentage:.7,categoryPercentage:.72},
       {label:'WPRO Average',data:W,backgroundColor:HC.orange,borderColor:HC.orange,borderWidth:1,borderRadius:5,barPercentage:.7,categoryPercentage:.72}
     ]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',animation:{duration:650,easing:'easeOutQuart'},layout:{padding:{top:4,left:0,right:56,bottom:0}},plugins:{legend:{display:true,position:'top',align:'end',labels:{font:{size:12,weight:'600'},color:HC.navy,usePointStyle:true,pointStyle:'rectRounded',boxWidth:13,padding:14}},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex],label:ctx=>ctx.dataset.label+': '+fmtPct(ctx.raw)}},datalabels:{display:ctx=>ctx?.dataset?.data?.[ctx.dataIndex]!=null,formatter:v=>fmtPct(v),anchor:'end',align:ctx=>barValue(ctx)>=96?'left':'right',offset:4,clip:false,clamp:true,color:ctx=>barValue(ctx)>=96?'#fff':'#111827',font:{size:11,weight:'800'}}},scales:{x:{min:0,max:100,clip:false,ticks:{callback:v=>v+'%',font:{size:11},color:HC.muted,stepSize:20},grid:{color:'rgba(0,63,92,.12)'}},y:{ticks:{font:{size:11,weight:'700'},color:HC.navy,autoSkip:false,padding:8},grid:{display:false}}}}
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',animation:{duration:650,easing:'easeOutQuart'},layout:{padding:{top:4,left:0,right:window.innerWidth<600?16:56,bottom:0}},plugins:{legend:{display:true,position:'top',align:'end',labels:{font:{size:12,weight:'600'},color:HC.navy,usePointStyle:true,pointStyle:'rectRounded',boxWidth:13,padding:14}},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex],label:ctx=>ctx.dataset.label+': '+fmtPct(ctx.raw)}},datalabels:{display:ctx=>ctx?.dataset?.data?.[ctx.dataIndex]!=null,formatter:v=>fmtPct(v),anchor:'end',align:ctx=>barValue(ctx)>=96?'left':'right',offset:4,clip:false,clamp:true,color:ctx=>barValue(ctx)>=96?'#fff':'#111827',font:{size:11,weight:'800'}}},scales:{x:{min:0,max:100,clip:false,ticks:{callback:v=>v+'%',font:{size:11},color:HC.muted,stepSize:20},grid:{color:'rgba(0,63,92,.12)'}},y:{ticks:{font:{size:11,weight:'700'},color:HC.navy,autoSkip:false,padding:8},grid:{display:false}}}}
   });
 
   renderIndicatorProfile(name);

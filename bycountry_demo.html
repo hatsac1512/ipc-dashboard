@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>By Country — Dải ngang (National | Facility thẳng hàng)</title>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/vendor/chartjs-plugin-datalabels.min.js"></script>
+<script src="assets/vendor/d3.min.js"></script>
+<script src="assets/vendor/topojson.min.js"></script>
+<style>
+:root{--bg:#EEF1F6;--sf:#FFFFFF;--sf2:#F4F5F7;--bd:#E0E4EA;--navy:#003F5C;--orange:#D85A1A;--orange-lt:#F9EDE5;--blue:#009ADE;--blue-lt:#EAF0FA;--green:#0F7A5A;--green-lt:#E4F4EE;--red:#C0392B;--red-lt:#FDEEEE;--amber:#D8941A;--text:#212529;--muted:#6C757D;--subtle:#ADB5BD;--font:Roboto,"Noto Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--r:10px;--r-sm:6px;--shadow:0 2px 12px rgba(0,63,92,.07)}
+*{margin:0;padding:0;box-sizing:border-box}html{overflow-x:hidden}
+canvas{max-width:100%!important}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:16px;line-height:1.5}
+/* top chrome */
+.hd{background:var(--navy);padding:10px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:120;box-shadow:0 2px 16px rgba(27,43,69,.3);min-height:52px;flex-wrap:wrap;justify-content:space-between}
+.hd h1{font-size:16px;font-weight:500;color:#fff;line-height:24px}
+.hd .demo-tag{font-size:11px;font-weight:700;color:#FFC58A;border:1px solid rgba(255,197,138,.4);padding:3px 9px;border-radius:999px}
+.tab-bar{background:var(--sf);border-bottom:2px solid var(--bd);padding:0 24px;position:sticky;top:52px;z-index:110;box-shadow:var(--shadow);overflow-x:auto}
+.tabs{display:flex;width:fit-content}
+.tab{padding:11px 22px;border:none;border-bottom:3px solid transparent;background:none;font-family:inherit;font-size:16px;color:var(--muted);white-space:nowrap;margin-bottom:-2px}
+.tab.on{color:var(--orange);border-bottom-color:var(--orange);background:var(--orange-lt);font-weight:600}
+/* compact country selector (sticky) */
+.selbar{position:sticky;top:99px;z-index:100;background:var(--sf);border-bottom:1px solid var(--bd);box-shadow:0 2px 10px rgba(0,63,92,.05);padding:10px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.nav-grp{display:flex;align-items:center;gap:6px}
+.nav-btn{width:34px;height:38px;border:1.5px solid var(--bd);background:var(--sf);border-radius:var(--r-sm);font-size:18px;color:var(--navy);cursor:pointer;font-weight:700;line-height:1}
+.nav-btn:hover{border-color:var(--orange);color:var(--orange)}
+.ct-select{appearance:none;background:var(--sf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235A6374' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;border:1.5px solid var(--bd);color:var(--navy);font-family:inherit;font-size:15px;font-weight:700;padding:8px 36px 8px 14px;border-radius:var(--r-sm);min-width:220px;cursor:pointer}
+.ct-select:focus{outline:none;border-color:var(--orange)}
+.search-inp{border:1.5px solid var(--bd);border-radius:var(--r-sm);font-family:inherit;font-size:14px;padding:8px 12px;min-width:150px}
+.search-inp:focus{outline:none;border-color:var(--orange)}
+.pills{display:flex;gap:6px}
+.pill{padding:7px 14px;border-radius:999px;border:1.5px solid var(--bd);background:var(--sf);color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pill.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.headline{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.hl{border:1px solid var(--bd);border-radius:var(--r-sm);padding:5px 12px;min-width:84px;background:var(--sf2)}
+.hl .l{font-size:10px;color:var(--muted);line-height:14px;text-transform:uppercase;letter-spacing:.03em}
+.hl .v{font-size:19px;font-weight:800;line-height:24px;color:var(--navy)}
+.hl.nat{background:var(--green-lt);border-color:rgba(15,122,90,.3)}.hl.nat .v{color:var(--green)}
+.hl.fac{background:var(--orange-lt);border-color:rgba(216,90,26,.3)}.hl.fac .v{color:var(--orange)}
+/* body: horizontal bands, each band = National (left) | Facility (right), aligned */
+.wrap{max-width:1400px;margin:0 auto;padding:16px 22px 50px}
+.band{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;align-items:start;margin-bottom:4px}
+.cell{min-width:0}
+.col-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r);color:#fff;margin-bottom:12px;font-weight:800;font-size:15px}
+.col-head .s{font-size:12px;opacity:.9;margin-left:auto;font-weight:600}
+.col-head.nat{background:linear-gradient(90deg,var(--green),#0c6149)}
+.col-head.fac{background:linear-gradient(90deg,var(--orange),#b8470f)}
+.divider{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin:2px 2px 9px;text-transform:uppercase;letter-spacing:.03em}
+.divider::after{content:"";flex:1;height:2px;border-radius:2px}
+.divider.nat{color:var(--green)}.divider.nat::after{background:rgba(15,122,90,.25)}
+.divider.fac{color:var(--orange)}.divider.fac::after{background:rgba(216,90,26,.25)}
+.cd{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.profile-chart-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.profile-chart-sub{font-size:13px;color:var(--muted);margin-bottom:8px}
+.country-chart{position:relative;height:320px;min-width:0}
+/* facility compact KPI strip */
+.fac-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.fstat{display:flex;align-items:baseline;gap:8px;background:var(--sf);border:1px solid var(--bd);border-left:3px solid var(--bd);border-radius:var(--r-sm);padding:7px 13px;box-shadow:var(--shadow)}
+.fstat .l{font-size:12px;color:var(--muted);font-weight:600}
+.fstat .v{font-size:18px;font-weight:800;color:var(--navy)}
+.fstat.n{border-left-color:var(--navy)}.fstat.b{border-left-color:var(--blue)}.fstat.g{border-left-color:var(--green)}.fstat.o{border-left-color:var(--orange)}
+/* spider beside bar (inside facility cell) */
+.chart-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+.chart-grid>.cd{margin-bottom:0}
+.cp-stat{display:inline-flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--bd);border-radius:999px;padding:3px 8px;font-size:11px;font-weight:500;color:var(--muted)}
+.cp-stat-dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+.inc-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--green-lt);color:var(--green);border:1px solid rgba(15,122,90,.25)}
+/* national capacity strip (8 pillars Y/N/DK) */
+.cap-strip{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--bd)}
+.cap-cell{padding:9px 4px 8px;text-align:center;color:#fff;min-height:120px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.cap-cell.N{background:var(--red)}.cap-cell.Y{background:var(--green)}.cap-cell.DK{background:var(--amber)}
+.cap-num{font-size:15px;font-weight:800;line-height:1}
+.cap-name{font-size:9.5px;line-height:1.18;opacity:.96;flex:1}
+.cap-val{font-size:11px;font-weight:800;letter-spacing:.03em}
+.cap-leg{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.cap-leg .i{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.cap-leg .d{width:11px;height:11px;border-radius:3px}
+/* compact national summary (overall score + strongest / weakest) */
+.nat-summary{display:flex;align-items:center;gap:16px;padding:14px 16px}
+.ns-score{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-right:16px;border-right:1px solid var(--bd);min-width:92px}
+.ns-num{font-size:34px;font-weight:800;color:var(--green);line-height:1}
+.ns-lbl{font-size:11px;color:var(--muted);text-align:center;margin-top:5px;line-height:1.3}
+.ns-hi{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ns-row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:7px 11px;border-radius:var(--r-sm);font-size:12.5px}
+.ns-row.good{background:var(--green-lt)}.ns-row.bad{background:var(--red-lt)}.ns-row.dk{background:rgba(216,148,26,.12)}
+.ns-row .t{font-weight:700;white-space:nowrap}.ns-row.good .t{color:var(--green)}.ns-row.bad .t{color:var(--red)}.ns-row.dk .t{color:var(--amber)}
+.ns-row .v{font-weight:700;color:var(--navy);text-align:right}
+/* national flag + location map at the bottom of the national column */
+.nat-geo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.geo-card{position:relative;border-radius:var(--r);overflow:hidden;height:172px;box-shadow:var(--shadow);border:1px solid var(--bd);background:var(--sf2)}
+.geo-card .lbl{position:absolute;inset:auto 0 0 0;background:linear-gradient(transparent,rgba(0,35,64,.82));color:#fff;font-size:11px;font-weight:600;line-height:1.3;padding:16px 10px 7px;z-index:2}
+.geo-flag{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
+.geo-flag img{max-width:100%;max-height:100%;object-fit:contain;border:1px solid var(--bd);box-shadow:0 1px 5px rgba(0,0,0,.18)}
+.geo-map{width:100%;height:100%}.geo-map svg{width:100%;height:100%;display:block}
+@media(max-width:620px){.geo-card{height:158px}}
+/* national overview dot rows */
+.ov-row{display:grid;grid-template-columns:34px 1fr 46px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd)}
+.ov-row:last-child{border-bottom:0}
+.ov-code{font-size:11px;font-weight:800;color:var(--navy);text-align:right}
+.ov-dots{display:flex;gap:4px;flex-wrap:wrap}
+.ov-dot{min-width:22px;height:17px;border-radius:3px;color:#fff;font-size:8px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.ov-yt{font-size:11px;font-weight:800;text-align:right}
+/* facility overview chips */
+.dom-row{display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd)}
+.dom-row:last-child{border-bottom:0}
+.dom-sec{font-size:13px;font-weight:900;color:var(--navy);text-align:right}
+.dom-chips{display:flex;gap:5px;flex-wrap:wrap}
+.dom-chip{min-width:33px;height:23px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;padding:0 8px;font-size:11px;font-weight:900;color:#fff}
+.dom-chip.high{background:var(--green)}.dom-chip.mid{background:#74C49A;color:#0a4a36}.dom-chip.low{background:#64748B}.dom-chip.verylow{background:var(--red)}
+.leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.leg-i{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.leg-dot{width:10px;height:10px;border-radius:3px}
+/* national detail cards */
+.dcard{border:1px solid var(--bd);border-radius:var(--r-sm);overflow:hidden;margin-bottom:10px}
+.dcard .h{background:var(--navy);padding:8px 12px;display:flex;align-items:center;gap:8px}
+.dcard .h .tag{color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+.dcard .h .nm{font-size:12px;font-weight:700;color:#fff}
+.dcard .bar{height:5px;background:var(--sf2)}.dcard .bar>i{display:block;height:100%}
+.dcard .body{padding:8px 10px}
+.irow{display:flex;align-items:flex-start;gap:8px;padding:5px 7px;border-radius:5px;margin-bottom:2px;background:rgba(0,0,0,.015)}
+.ibadge{width:19px;height:19px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px}
+.ilbl{flex:1;font-size:12.5px;color:var(--navy);line-height:1.4}
+/* facility detail (label + pct bar) */
+.fsec{border:1px solid var(--bd);border-radius:var(--r-sm);overflow:hidden;margin-bottom:10px}
+.fsec .h{background:var(--orange);padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.fsec .h .nm{font-size:12px;font-weight:700;color:#fff}
+.fsec .h .pc{font-size:13px;font-weight:800;color:#fff}
+.fsec .body{padding:8px 10px}
+.fprow{display:grid;grid-template-columns:1fr 132px;gap:8px;align-items:center;padding:5px 4px;border-bottom:1px solid var(--bd)}
+.fprow:last-child{border-bottom:0}
+.fpl{font-size:12.5px;color:var(--navy);line-height:1.35}
+.fpl b{color:var(--muted);font-size:11px;margin-right:4px}
+.pctbar{display:flex;align-items:center;gap:6px}
+.pctbar .trk{flex:1;height:11px;background:var(--sf2);border:1px solid var(--bd);border-radius:4px;overflow:hidden}
+.pctbar .trk>i{display:block;height:100%}
+.pctbar .v{font-size:11px;font-weight:800;width:38px;text-align:right}
+/* responsive */
+@media(max-width:1024px){.band{grid-template-columns:1fr;margin-bottom:0}.headline{margin-left:0;width:100%}}
+@media(max-width:620px){.chart-grid{grid-template-columns:1fr}.cap-cell .cap-name{font-size:10px}}
+@media(max-width:560px){.fac-stats{gap:6px}.fstat{padding:6px 10px}.ct-select{min-width:140px}.search-inp{min-width:110px}}
+</style>
+</head>
+<body>
+<div class="hd">
+  <h1>By Country &mdash; Dải ngang (National | Facility thẳng hàng) <span class="demo-tag">DEMO · dữ liệu minh hoạ</span></h1>
+</div>
+<div class="tab-bar"><div class="tabs">
+  <button class="tab">Overview</button><button class="tab on">By Country</button>
+  <button class="tab">By Income</button><button class="tab">By Facility Level</button>
+</div></div>
+<div class="selbar">
+  <div class="nav-grp">
+    <button class="nav-btn" onclick="step(-1)" title="Quốc gia trước">‹</button>
+    <select class="ct-select" id="ctSelect" onchange="selectCt(this.value)"></select>
+    <button class="nav-btn" onclick="step(1)" title="Quốc gia sau">›</button>
+  </div>
+  <input class="search-inp" id="search" placeholder="Tìm quốc gia…" oninput="applyFilter()">
+  <div class="pills">
+    <button class="pill on" data-g="ALL" onclick="setGrp('ALL')">All</button>
+    <button class="pill" data-g="HICs" onclick="setGrp('HICs')">HIC</button>
+    <button class="pill" data-g="L&MICs" onclick="setGrp('L&MICs')">LMIC</button>
+  </div>
+  <div class="headline" id="headline"></div>
+</div>
+
+<div class="wrap" id="wrap"></div>
+
+<script>
+/* ---------- dữ liệu minh hoạ (KHÔNG phải dữ liệu thật) ---------- */
+const PILLARS=['Strategic plan','Microbiology','Data collection','Data analysis','Reporting','HAI definitions','Feedback','M&E'];
+const WPRO_FAC=[58,71,64,49,55,68,52,46];
+const NAT_DOMAINS=['IPC Programme','HAI Governance','Strategic Planning','Data Collection','Data Analysis','Interpretation','Communication','M&E'];
+const NAT_INDS={
+  'IPC Programme':['Active national IPC programme','Dedicated IPC budget line','Full-time IPC focal point'],
+  'HAI Governance':['Multidisciplinary technical group','Legal/policy mandate'],
+  'Strategic Planning':['National HAI surveillance plan','Standardised case definitions','Priority HAI list'],
+  'Data Collection':['Standardised data forms','Microbiology capacity','Electronic data system'],
+  'Data Analysis':['National analysis protocol','Risk-adjustment applied'],
+  'Interpretation':['Regular interpretation reports','Benchmarking against targets'],
+  'Communication':['Routine feedback to facilities','Public reporting'],
+  'M&E':['M&E framework','External data quality audit','Annual review meeting']
+};
+const NAT_CAP=['Develop national strategic plan','Develop standardized data-collection protocols','Integrate HCF data into national database','Check quality of HCF-reported data','Analyse HAI surveillance data','Interpret HAI surveillance data','Communicate / provide feedback on data','Conduct M&E of HAI surveillance'];
+const FAC_TABLES=[
+  {key:'T1',title:'Microbiology & laboratory',inds:[{code:'1.1',label:'On-site microbiology laboratory'},{code:'1.2',label:'Antimicrobial susceptibility testing'},{code:'1.3',label:'Blood culture capacity'}]},
+  {key:'T2',title:'Surveillance system',inds:[{code:'2.1',label:'Written HAI surveillance protocol'},{code:'2.2',label:'Dedicated surveillance staff'},{code:'2.3',label:'Standard case definitions applied'}]},
+  {key:'T3',title:'Data collection',inds:[{code:'3.1',label:'Standardised data forms'},{code:'3.2',label:'Electronic data capture'}]},
+  {key:'T4',title:'Analysis & reporting',inds:[{code:'4.1',label:'Regular analysis of HAI rates'},{code:'4.2',label:'Feedback to wards'},{code:'4.3',label:'Annual report produced'}]},
+  {key:'T5',title:'Prevention practices',inds:[{code:'5.1',label:'Hand hygiene compliance monitoring'},{code:'5.2',label:'Care-bundle implementation'}]},
+  {key:'T6',title:'AMR integration',inds:[{code:'6.1',label:'Linked to AMR surveillance'},{code:'6.2',label:'Priority pathogen tracking'}]}
+];
+function seed(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return()=>{h+=0x6D2B79F5;let t=Math.imul(h^h>>>15,1|h);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296}}
+const COUNTRIES=[
+  {name:'Vietnam',inc:'L&MICs',natScore:96},{name:'China',inc:'L&MICs'},{name:'Japan',inc:'HICs'},
+  {name:'Republic of Korea',inc:'HICs'},{name:'Philippines',inc:'L&MICs'},{name:'Cambodia',inc:'L&MICs'},
+  {name:'Lao PDR',inc:'L&MICs'},{name:'Mongolia',inc:'L&MICs'},{name:'Fiji',inc:'L&MICs'},{name:'Australia',inc:'HICs'}
+].map(c=>{
+  const r=seed(c.name);
+  const natScore=c.natScore??Math.round(45+r()*50);
+  const facVals=PILLARS.map((_,i)=>Math.max(8,Math.min(98,Math.round(WPRO_FAC[i]+(r()*60-28)))));
+  const facilities=Math.round(8+r()*60);
+  const tertiary=Math.round(facilities*(0.3+r()*0.3));
+  const domains=NAT_DOMAINS.map(d=>{
+    const inds=NAT_INDS[d].map(l=>{const x=r();const v=x>0.62?'Y':x>0.4?'N':x>0.22?'DK':'NA';return{label:l,v};});
+    const yes=inds.filter(i=>i.v==='Y').length;
+    return{title:d,inds,pct:Math.round(yes/inds.length*100)};
+  });
+  const fTables=FAC_TABLES.map(tb=>({...tb,vals:tb.inds.map(()=>Math.round(r()*100))}));
+  const natCap=c.name==='Vietnam'?['Y','N','Y','N','Y','N','Y','N']:NAT_CAP.map(()=>{const x=r();return x>0.45?'Y':x>0.18?'N':'DK';});
+  return{...c,natScore,facVals,facilities,tertiary,secondary:facilities-tertiary,domains,fTables,natCap};
+});
+
+const COL={Y:'#0F7A5A',N:'#C0392B',DK:'#8C96A8',NA:'#CBD5E1'};
+const IC={Y:'Y',N:'N',DK:'?',NA:'-'};
+const CAPLBL={Y:'Yes',N:'No',DK:'DK'};
+const band=p=>p>=75?'high':p>=50?'mid':p>=25?'low':'verylow';
+const barCol=p=>p>=75?'#0F7A5A':p>=50?'#74C49A':p>=25?'#64748B':'#C0392B';
+const barTxt=p=>p>=75?'#0F7A5A':p>=50?'#2E9E68':p>=25?'#4A5568':'#C0392B';
+/* ISO codes (for flag) + topojson name overrides (for map) — demo subset */
+const ISO={'Vietnam':'vn','China':'cn','Japan':'jp','Republic of Korea':'kr','Philippines':'ph','Cambodia':'kh','Lao PDR':'la','Mongolia':'mn','Fiji':'fj','Australia':'au'};
+const MAP_NAME={'Lao PDR':'Laos','Republic of Korea':'South Korea'};
+let __world=null;
+if(window.ChartDataLabels){try{Chart.register(window.ChartDataLabels);}catch(e){}}
+Chart.defaults.plugins=Chart.defaults.plugins||{};Chart.defaults.plugins.datalabels={display:false};
+let selName='Vietnam', grp='ALL', charts={};
+const cur=()=>COUNTRIES.find(c=>c.name===selName);
+const destroyCharts=()=>{Object.values(charts).forEach(c=>c&&c.destroy());charts={}};
+function filtered(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  return COUNTRIES.filter(c=>(grp==='ALL'||c.inc===grp)&&c.name.toLowerCase().includes(q));
+}
+function renderSelect(){
+  const list=filtered();
+  if(!list.some(c=>c.name===selName)&&list.length)selName=list[0].name;
+  document.getElementById('ctSelect').innerHTML=list.map(c=>
+    `<option value="${c.name}" ${c.name===selName?'selected':''}>${c.name} — ${c.inc==='HICs'?'HIC':'LMIC'}</option>`).join('');
+}
+function renderHeadline(){
+  const c=cur();const facAvg=Math.round(c.facVals.reduce((a,b)=>a+b,0)/c.facVals.length);
+  document.getElementById('headline').innerHTML=
+    `<div class="hl nat"><div class="l">Nat. capacity</div><div class="v">${c.natScore}%</div></div>
+     <div class="hl fac"><div class="l">Facilities</div><div class="v">${c.facilities}</div></div>
+     <div class="hl fac"><div class="l">Facility avg</div><div class="v">${facAvg}%</div></div>`;
+}
+function applyFilter(){renderSelect();render();}
+function setGrp(g){grp=g;document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('on',p.dataset.g===g));renderSelect();render();}
+function selectCt(n){selName=n;render();}
+function step(d){const list=filtered();const i=list.findIndex(c=>c.name===selName);const ni=(i+d+list.length)%list.length;selName=list[ni].name;renderSelect();render();}
+
+/* ===== NATIONAL pieces ===== */
+function natCapHTML(c){
+  const cells=c.natCap.map((v,i)=>`<div class="cap-cell ${v}" title="${i+1}. ${NAT_CAP[i]}: ${CAPLBL[v]}"><div class="cap-num">${i+1}</div><div class="cap-name">${NAT_CAP[i]}</div><div class="cap-val">${CAPLBL[v]}</div></div>`).join('');
+  return `<div class="cd" style="padding:14px 16px">
+    <div class="cap-leg">
+      <div class="i"><span class="d" style="background:var(--green)"></span>Yes</div>
+      <div class="i"><span class="d" style="background:var(--red)"></span>No</div>
+      <div class="i"><span class="d" style="background:var(--amber)"></span>Don't know</div>
+    </div>
+    <div class="cap-strip">${cells}</div></div>`;
+}
+function natSummaryHTML(c){
+  const yes=c.natCap.filter(v=>v==='Y').length;
+  const no=c.natCap.filter(v=>v==='N').length;
+  const dk=c.natCap.filter(v=>v==='DK').length;
+  const tot=c.natCap.length;
+  return `<div class="cd nat-summary">
+    <div class="ns-score"><div class="ns-num">${yes}/${tot}</div><div class="ns-lbl">Capacity pillars<br>reporting “Yes”</div></div>
+    <div class="ns-hi">
+      <div class="ns-row good"><span class="t">▲ Yes</span><span class="v">${yes} of ${tot} pillars</span></div>
+      <div class="ns-row bad"><span class="t">▼ No</span><span class="v">${no} of ${tot} pillars</span></div>
+      ${dk?`<div class="ns-row dk"><span class="t">● Don't know</span><span class="v">${dk} of ${tot} pillars</span></div>`:''}
+    </div></div>`;
+}
+function natGeoHTML(c){
+  const iso=ISO[c.name]||'';
+  return `<div class="nat-geo">
+      <div class="geo-card"><div class="geo-flag"><img src="https://flagcdn.com/w320/${iso}.png" alt="Flag of ${c.name}" onerror="this.style.display='none'"></div><span class="lbl">National flag · ${c.name}</span></div>
+      <div class="geo-card"><div class="geo-map" id="natMap"></div><span class="lbl">Location · WHO Western Pacific Region</span></div>
+    </div>`;
+}
+function drawMap(c){
+  const box=document.getElementById('natMap'); if(!box||typeof d3==='undefined')return;
+  const draw=world=>{
+    d3.select(box).select('svg').remove();
+    const W=box.clientWidth||300,H=box.clientHeight||172;
+    const svg=d3.select(box).append('svg').attr('viewBox',`0 0 ${W} ${H}`).style('background','#c8daea');
+    const proj=d3.geoEquirectangular().rotate([-160,0]).center([0,6]).scale(W*0.32).translate([W*0.5,H*0.5]).clipExtent([[0,0],[W,H]]);
+    const path=d3.geoPath(proj);
+    const ft=topojson.feature(world,world.objects.countries);
+    const target=MAP_NAME[c.name]||c.name;
+    svg.selectAll('path').data(ft.features).join('path').attr('d',path)
+      .attr('fill',d=>d.properties.name===target?'#D85A1A':'#dce9f3').attr('stroke','#fff').attr('stroke-width',0.4);
+    const tf=ft.features.find(d=>d.properties.name===target);
+    if(tf){const cen=path.centroid(tf);if(cen&&!isNaN(cen[0]))svg.append('circle').attr('cx',cen[0]).attr('cy',cen[1]).attr('r',7).attr('fill','none').attr('stroke','#003F5C').attr('stroke-width',2.2);}
+  };
+  if(__world)draw(__world);else d3.json('assets/vendor/countries-110m.json').then(w=>{__world=w;draw(w);}).catch(()=>{});
+}
+function natOverviewHTML(c){
+  const counts={Y:0,N:0,DK:0,NA:0};c.domains.forEach(d=>d.inds.forEach(i=>counts[i.v]++));
+  const rows=c.domains.map((d,idx)=>{
+    const dots=d.inds.map(i=>`<span class="ov-dot" style="background:${COL[i.v]}" title="${i.label}: ${i.v}">${IC[i.v]}</span>`).join('');
+    const y=d.inds.filter(i=>i.v==='Y').length;
+    return `<div class="ov-row"><div class="ov-code">S${idx+1}</div><div class="ov-dots">${dots}</div><div class="ov-yt" style="color:${barTxt(d.pct)}">${y}/${d.inds.length}</div></div>`;
+  }).join('');
+  return `<div class="cd">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="cp-stat"><span class="cp-stat-dot" style="background:#0F7A5A"></span>Yes ${counts.Y}</span>
+      <span class="cp-stat"><span class="cp-stat-dot" style="background:#C0392B"></span>No ${counts.N}</span>
+      <span class="cp-stat"><span class="cp-stat-dot" style="background:#8C96A8"></span>DK ${counts.DK}</span>
+      <span class="cp-stat"><span class="cp-stat-dot" style="background:#CBD5E1"></span>N/A ${counts.NA}</span>
+    </div>${rows}</div>`;
+}
+function natDetailHTML(c){
+  return c.domains.map((d,idx)=>{
+    const head=d.pct>=60?'#0F7A5A':d.pct>=30?'#D85A1A':'#C0392B';
+    const rows=d.inds.map(i=>`<div class="irow"><div class="ibadge" style="background:${COL[i.v]}">${IC[i.v]}</div><div class="ilbl">${i.label}</div></div>`).join('');
+    return `<div class="dcard"><div class="h"><span class="tag" style="background:${head}">S${idx+1}</span><span class="nm">${d.title}</span></div>
+      <div class="bar"><i style="width:${d.pct}%;background:${head}"></i></div><div class="body">${rows}</div></div>`;
+  }).join('');
+}
+
+/* ===== FACILITY pieces ===== */
+function facTopHTML(c){
+  const facAvg=Math.round(c.facVals.reduce((a,b)=>a+b,0)/c.facVals.length);
+  return `<div class="fac-stats">
+      <div class="fstat n"><span class="l">Facilities surveyed</span><span class="v">${c.facilities}</span></div>
+      <div class="fstat b"><span class="l">Tertiary</span><span class="v">${c.tertiary}</span></div>
+      <div class="fstat g"><span class="l">Secondary</span><span class="v">${c.secondary}</span></div>
+      <div class="fstat o"><span class="l">Avg capacity</span><span class="v">${facAvg}%</span></div>
+    </div>
+    <div class="chart-grid">
+      <div class="cd"><div class="profile-chart-title">Spider Chart for HAI Capacity</div>
+        <div class="profile-chart-sub">${c.name} vs WPRO Average</div>
+        <div class="country-chart"><canvas id="fRadar"></canvas></div></div>
+      <div class="cd"><div class="profile-chart-title">Bar Chart for HAI Capacity</div>
+        <div class="profile-chart-sub">${c.name} vs WPRO Average</div>
+        <div class="country-chart"><canvas id="fBar"></canvas></div></div>
+    </div>`;
+}
+function facOverviewHTML(c){
+  const rows=c.fTables.map(tb=>{
+    const chips=tb.inds.map((ind,i)=>`<span class="dom-chip ${band(tb.vals[i])}" title="${ind.code} ${ind.label}: ${tb.vals[i]}%">${ind.code}</span>`).join('');
+    return `<div class="dom-row"><div class="dom-sec">${tb.key}</div><div class="dom-chips">${chips}</div></div>`;
+  }).join('');
+  return `<div class="cd">${rows}
+    <div class="leg"><div class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>75-100%</div>
+    <div class="leg-i"><span class="leg-dot" style="background:#74C49A"></span>50-74%</div>
+    <div class="leg-i"><span class="leg-dot" style="background:#64748B"></span>25-49%</div>
+    <div class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>0-24%</div></div></div>`;
+}
+function facDetailHTML(c){
+  return c.fTables.map(tb=>{
+    const avg=Math.round(tb.vals.reduce((a,b)=>a+b,0)/tb.vals.length);
+    const rows=tb.inds.map((ind,i)=>{const v=tb.vals[i];return `<div class="fprow">
+      <div class="fpl"><b>${ind.code}</b>${ind.label}</div>
+      <div class="pctbar"><div class="trk"><i style="width:${v}%;background:${barCol(v)}"></i></div><span class="v" style="color:${barTxt(v)}">${v}%</span></div></div>`;}).join('');
+    return `<div class="fsec"><div class="h"><span class="nm">${tb.key} · ${tb.title}</span><span class="pc">${avg}%</span></div><div class="body">${rows}</div></div>`;
+  }).join('');
+}
+
+/* radar % value labels with collision avoidance (ported from hai_facility_dashboard) */
+const radarLabelPlugin={
+  id:'ctRadarLabels',
+  afterDraw(chart){
+    const {ctx,scales:{r}}=chart; if(!r)return; ctx.save();
+    const boxes=[];
+    const overlaps=(a,b)=>!(a.x+a.w<b.x||b.x+b.w<a.x||a.y+a.h<b.y||b.y+b.h<a.y);
+    const overlapArea=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
+    const clampBox=box=>{const ar=chart.chartArea;box.x=Math.max(ar.left+2,Math.min(ar.right-box.w-2,box.x));box.y=Math.max(ar.top+2,Math.min(ar.bottom-box.h-2,box.y));};
+    const drawBox=box=>{const rr=4;ctx.fillStyle=box.bg;ctx.strokeStyle=box.bdr;ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(box.x+rr,box.y);ctx.lineTo(box.x+box.w-rr,box.y);ctx.arcTo(box.x+box.w,box.y,box.x+box.w,box.y+rr,rr);ctx.lineTo(box.x+box.w,box.y+box.h-rr);ctx.arcTo(box.x+box.w,box.y+box.h,box.x+box.w-rr,box.y+box.h,rr);ctx.lineTo(box.x+rr,box.y+box.h);ctx.arcTo(box.x,box.y+box.h,box.x,box.y+box.h-rr,rr);ctx.lineTo(box.x,box.y+rr);ctx.arcTo(box.x,box.y,box.x+rr,box.y,rr);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=box.col;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(box.txt,box.x+box.w/2,box.y+box.h/2);};
+    chart.data.datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di); const isWPRO=di===0;
+      const col=isWPRO?'#D85A1A':'#009900';
+      const bg=isWPRO?'rgba(255,247,237,.96)':'rgba(237,255,237,.96)';
+      const bdr=isWPRO?'rgba(216,90,26,.4)':'rgba(0,153,0,.4)';
+      ctx.font='700 10px Roboto,"Noto Sans",Arial,sans-serif';
+      meta.data.forEach((pt,i)=>{
+        const v=ds.data[i]; if(v==null)return;
+        const cx=r.xCenter,cy=r.yCenter,dx=pt.x-cx,dy=pt.y-cy,rawLen=Math.sqrt(dx*dx+dy*dy);
+        const axisAngle=(Math.PI*2*i/ds.data.length)-Math.PI/2,len=rawLen||1;
+        const ux=rawLen<2?Math.cos(axisAngle):dx/len, uy=rawLen<2?Math.sin(axisAngle):dy/len;
+        const safeOuter=Math.max(48,r.drawingArea-24), safeInner=34;
+        const valueDist=safeInner+(safeOuter-safeInner)*Math.max(0,Math.min(100,Number(v)))/100;
+        const labelDist=Math.max(safeInner,Math.min(safeOuter,valueDist+(isWPRO?-6:6)));
+        const sideNudge=isWPRO?-8:8;
+        const lx=cx+ux*labelDist+(-uy*sideNudge), ly=cy+uy*labelDist+(ux*sideNudge);
+        const txt=Math.round(v)+'%', tw=ctx.measureText(txt).width+9, th=16;
+        const base={x:lx-tw/2,y:ly-th/2,w:tw,h:th,txt,col,bg,bdr};
+        const tries=[[0,0],[ux*14,uy*14],[-ux*14,-uy*14],[-uy*18,ux*18],[uy*18,-ux*18],[ux*26-uy*12,uy*26+ux*12],[ux*26+uy*12,uy*26-ux*12],[-ux*26-uy*12,-uy*26+ux*12],[-ux*26+uy*12,-uy*26-ux*12],[-uy*28,ux*28],[uy*28,-ux*28],[ux*42,uy*42],[-ux*42,-uy*42],[-uy*44,ux*44],[uy*44,-ux*44]];
+        let picked=null,best=null,bestScore=Infinity;
+        for(const [ox,oy] of tries){const box={...base,x:base.x+ox,y:base.y+oy};clampBox(box);const score=boxes.reduce((s,b)=>s+overlapArea(box,b),0);if(score<bestScore){best=box;bestScore=score}if(!boxes.some(b=>overlaps(box,b))){picked=box;break}}
+        boxes.push(picked||best||base);
+      });
+    });
+    boxes.forEach(drawBox); ctx.restore();
+  }
+};
+function drawCharts(c){
+  const labels=PILLARS.map(p=>p.length>14?p.split(' '):p);
+  const fullLabels=PILLARS;
+  charts.radar=new Chart(document.getElementById('fRadar'),{type:'radar',
+    data:{labels,datasets:[
+      {label:'WPRO Average',data:WPRO_FAC,backgroundColor:'rgba(216,90,26,.07)',borderColor:'#D85A1A',borderWidth:2,pointRadius:3,borderDash:[5,4]},
+      {label:c.name,data:c.facVals,backgroundColor:'rgba(0,153,0,.09)',borderColor:'#009900',borderWidth:2.5,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:18},plugins:{legend:{display:true,position:'top',labels:{font:{size:11},usePointStyle:true,boxWidth:12}},datalabels:{display:false},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex]}}},scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20,font:{size:9},callback:v=>v+'%'},pointLabels:{font:{size:9,weight:'700'},color:'#003F5C'},grid:{color:'rgba(0,63,92,.16)'},angleLines:{color:'rgba(0,63,92,.16)'}}}},
+    plugins:[radarLabelPlugin]});
+  const barVal=ctx=>Number(ctx?.dataset?.data?.[ctx.dataIndex]);
+  charts.bar=new Chart(document.getElementById('fBar'),{type:'bar',
+    data:{labels,datasets:[
+      {label:c.name,data:c.facVals,backgroundColor:'#0F7A5A',borderRadius:5,barPercentage:.7,categoryPercentage:.72},
+      {label:'WPRO Average',data:WPRO_FAC,backgroundColor:'#D85A1A',borderRadius:5,barPercentage:.7,categoryPercentage:.72}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',layout:{padding:{right:36}},plugins:{legend:{display:true,position:'top',align:'end',labels:{font:{size:10,weight:'600'},usePointStyle:true,pointStyle:'rectRounded',boxWidth:11}},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex]}},datalabels:{display:ctx=>barVal(ctx)!=null,formatter:v=>Math.round(v)+'%',anchor:'end',align:ctx=>barVal(ctx)>=90?'left':'right',offset:3,clip:false,clamp:true,color:ctx=>barVal(ctx)>=90?'#fff':'#111827',font:{size:10,weight:'800'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'rgba(0,63,92,.12)'}},y:{ticks:{font:{size:9,weight:'700'},color:'#003F5C'},grid:{display:false}}}}});
+}
+
+function render(){
+  destroyCharts();
+  renderHeadline();
+  const c=cur();const facAvg=Math.round(c.facVals.reduce((a,b)=>a+b,0)/c.facVals.length);
+  document.getElementById('wrap').innerHTML=
+    `<div class="band">
+       <div class="cell"><div class="col-head nat">National-level capacity<span class="s">${c.name} · overall ${c.natScore}%</span></div>${natCapHTML(c)}${natSummaryHTML(c)}${natGeoHTML(c)}</div>
+       <div class="cell"><div class="col-head fac">Facility-level results<span class="s">${c.facilities} facilities · avg ${facAvg}%</span></div>${facTopHTML(c)}</div>
+     </div>
+     <div class="band">
+       <div class="cell"><div class="divider nat">Domain overview</div>${natOverviewHTML(c)}</div>
+       <div class="cell"><div class="divider fac">Domain overview</div>${facOverviewHTML(c)}</div>
+     </div>
+     <div class="band">
+       <div class="cell"><div class="divider nat">Chi tiết chỉ số (diễn giải)</div>${natDetailHTML(c)}</div>
+       <div class="cell"><div class="divider fac">Chi tiết chỉ số (diễn giải)</div>${facDetailHTML(c)}</div>
+     </div>`;
+  drawCharts(c);
+  drawMap(c);
+}
+renderSelect();render();
+</script>
+</body>
+</html>
