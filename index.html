@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WPRO IPC Monitoring Dashboards</title>
+<style>
+:root{--navy:#003F5C;--blue:#0074A6;--teal:#0E8F84;--orange:#D85A1A;--gold:#E0A21A;--bg:#EEF1F6;--sf:#fff;--text:#212529;--muted:#5D6975;--shadow:0 16px 46px rgba(0,35,64,.18);--font:Roboto,"Noto Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:var(--font);color:var(--text);background:var(--bg);scroll-behavior:smooth}
+button{font-family:inherit}
+.landing{min-height:100vh;position:relative;display:flex;align-items:flex-start;overflow:hidden;background:#003F5C}
+.landing::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,63,92,.97),rgba(0,116,166,.92) 48%,rgba(3,88,122,.96)),url("photos/IPC background.jpg") center/cover no-repeat}
+.landing::after{display:none}
+.front{position:relative;z-index:1;width:min(1180px,calc(100% - 44px));margin:0 auto;padding:34px 0 72px}
+.brand{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:8px 16px;color:rgba(255,255,255,.88);font-size:12px;font-weight:700;letter-spacing:0;margin-bottom:26px}
+.brand-dot{width:9px;height:9px;border-radius:50%;background:var(--orange)}
+.hero-grid{display:block}
+.hero-copy{max-width:980px;color:#fff;background:linear-gradient(135deg,rgba(0,35,64,.42),rgba(0,116,166,.22));border:1px solid rgba(255,255,255,.22);border-radius:8px;box-shadow:0 24px 70px rgba(0,20,42,.26);padding:38px 42px;backdrop-filter:blur(8px)}
+h1{max-width:850px;color:#fff;font-size:64px;line-height:1.02;font-weight:800;letter-spacing:0;margin-bottom:12px}
+.subtitle{color:rgba(255,255,255,.94);font-size:28px;line-height:1.22;font-weight:760;margin-bottom:24px}
+.lead{max-width:890px;color:rgba(255,255,255,.9);font-size:17px;line-height:1.64;margin-bottom:16px}
+.hero-note{max-width:890px;color:rgba(255,255,255,.9);font-size:17px;line-height:1.64}
+.section-band{margin-top:28px;background:#fff;border:1px solid #DCE4EC;border-radius:8px;box-shadow:0 18px 44px rgba(0,35,64,.2);padding:28px}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:22px;margin-bottom:20px}
+.section-head h2{color:var(--navy);font-size:30px;line-height:1.18;font-weight:800;letter-spacing:0}
+.section-head p{max-width:520px;color:var(--muted);font-size:14px;line-height:1.55}
+.coverage-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.coverage-item{border-top:4px solid var(--blue);background:#F7FAFD;padding:16px;border-radius:6px;color:#24313C;font-size:14px;line-height:1.5;min-height:148px}
+.coverage-item:nth-child(2){border-color:var(--teal)}
+.coverage-item:nth-child(3){border-color:var(--orange)}
+.coverage-item:nth-child(4){border-color:var(--gold)}
+.coverage-item:nth-child(5){border-color:#6F7D8C}
+.programs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:1180px;margin-top:18px}
+.program{position:relative;overflow:hidden;min-height:290px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:#fff;box-shadow:var(--shadow);cursor:pointer;text-align:left;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.program:hover{transform:translateY(-3px);box-shadow:0 22px 58px rgba(0,35,64,.3);border-color:rgba(216,90,26,.5)}
+.program-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0;transition:transform .25s ease}
+.program:hover .program-img{transform:scale(1.035)}
+.program-shade{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,35,64,.1),rgba(0,35,64,.86))}
+.program-body{position:absolute;inset:auto 0 0;z-index:2;padding:22px;color:#fff}
+.program-kicker{display:inline-flex;align-items:center;background:var(--orange);color:#fff;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;margin-bottom:12px}
+.program-title{display:block;min-height:56px;font-size:25px;line-height:1.12;font-weight:800;margin-bottom:8px}
+.program-copy{display:block;min-height:44px;font-size:14px;line-height:1.55;color:rgba(255,255,255,.84);max-width:420px;margin-bottom:0}
+.docs-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;list-style:none}
+.docs-list a{display:flex;align-items:center;gap:10px;min-height:52px;border:1px solid #DCE4EC;border-radius:6px;background:#F8FAFC;color:var(--navy);font-size:14px;line-height:1.35;font-weight:760;text-decoration:none;padding:10px 12px}
+.docs-list a::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--orange);flex-shrink:0}
+.docs-list a:hover{border-color:rgba(216,90,26,.5);background:#FFF8F3}
+.guidance-band{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(0,35,64,.54),rgba(0,116,166,.28));border-color:rgba(255,255,255,.22);box-shadow:0 24px 70px rgba(0,20,42,.26);backdrop-filter:blur(8px)}
+.guidance-band::after{content:"";position:absolute;right:-64px;top:-76px;width:220px;height:220px;border-radius:50%;border:34px solid rgba(255,255,255,.08)}
+.guidance-band .section-head,.guidance-band .docs-list{position:relative;z-index:1}
+.guidance-band .section-head h2{color:#fff}
+.guidance-band .section-head p{color:rgba(255,255,255,.78)}
+.guidance-band .docs-list a{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);color:#fff}
+.guidance-band .docs-list a:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.32)}
+.divider{height:1px;background:#DCE4EC;margin:24px 0}
+@keyframes colorBreath{0%{background-color:#003F5C}42%{background-color:#006B91}72%{background-color:#008DC9}100%{background-color:#003F5C}}
+@keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.brand,h1,.subtitle,.lead,.hero-note,.section-band{animation:riseIn .72s cubic-bezier(.2,.72,.2,1) both}
+.brand{animation-delay:.04s}h1{animation-delay:.12s}.subtitle{animation-delay:.16s}.lead{animation-delay:.2s}.hero-note{animation-delay:.24s}.section-band{animation-delay:.3s}
+.shell{display:none;min-height:100vh;background:var(--bg)}
+.topbar{height:78px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 24px;box-shadow:0 2px 16px rgba(27,43,69,.28);position:sticky;top:0;z-index:10}
+.top-logo{height:54px;width:auto;flex-shrink:0;filter:brightness(0) invert(1);opacity:.96}
+.switcher{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.switch-btn,.home-btn{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;border-radius:999px;padding:9px 13px;font-size:13px;font-weight:700;cursor:pointer}
+.switch-btn:hover,.home-btn:hover{background:rgba(255,255,255,.18)}
+.switch-btn.on{background:var(--orange);border-color:var(--orange)}
+.frame-wrap{height:calc(100vh - 78px);background:var(--bg)}
+#dashFrame{width:100%;height:100%;border:0;display:block;background:#fff}
+@media(max-width:1100px){.coverage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.coverage-item{min-height:auto}}
+@media(max-width:980px){.docs-list{grid-template-columns:1fr 1fr}.hero-copy{padding:32px}}
+@media(max-width:820px){.landing{align-items:flex-start}.front{padding-top:24px;width:min(100% - 28px,1180px)}.hero-copy{padding:24px 20px}h1{font-size:42px}.subtitle{font-size:22px}.lead{font-size:16px}.section-band{padding:20px}.section-head{display:block}.section-head h2{font-size:24px;margin-bottom:8px}.coverage-grid,.docs-list,.programs{grid-template-columns:1fr}.program,.program.gapme{grid-column:auto;min-height:260px}.topbar{height:auto;min-height:86px;align-items:flex-start;flex-direction:column;padding:12px 14px}.top-logo{height:46px}.switcher{width:100%;overflow-x:auto;padding-bottom:2px}.frame-wrap{height:calc(100vh - 132px)}.switch-btn,.home-btn{padding:7px 10px;font-size:12px}}
+@supports(height:100dvh){.landing{min-height:100dvh}.frame-wrap{height:calc(100dvh - 78px)}@media(max-width:820px){.frame-wrap{height:calc(100dvh - 132px)}}}
+@media(max-width:390px){.brand{padding:6px 10px;gap:6px;font-size:11px}.brand-logo{height:28px}.brand-sep{height:16px}.lead{font-size:15px}h1{font-size:34px}.subtitle{font-size:19px}.program-title{font-size:20px}.program-copy{font-size:13px}.docs-list a{font-size:13px}}
+/* WHO logo in brand bar */
+.brand-logo{height:40px;width:auto;flex-shrink:0;opacity:.94;filter:brightness(0) invert(1)}
+.brand-sep{width:1px;height:26px;background:rgba(255,255,255,.3);flex-shrink:0}
+/* theme toggle */
+.theme-btn{position:fixed;top:14px;right:18px;z-index:100;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:999px;color:rgba(255,255,255,.9);cursor:pointer;transition:background .18s,transform .18s,border-color .18s,color .18s;font-family:inherit;box-shadow:0 10px 30px rgba(0,35,64,.18)}
+.theme-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px)}
+.theme-icon{position:relative;width:18px;height:18px;display:block;color:currentColor;transition:transform .22s ease}
+.theme-icon::before{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:currentColor;transform:translate(-50%,-50%);box-shadow:0 -8px 0 -5px currentColor,0 8px 0 -5px currentColor,8px 0 0 -5px currentColor,-8px 0 0 -5px currentColor,5.7px 5.7px 0 -5px currentColor,-5.7px 5.7px 0 -5px currentColor,5.7px -5.7px 0 -5px currentColor,-5.7px -5.7px 0 -5px currentColor;transition:all .22s ease}
+/* light mode overrides */
+.landing[data-theme="light"]{background:#EAF7FC}
+.landing[data-theme="light"]::before{background:linear-gradient(135deg,rgba(234,247,252,.94),rgba(217,241,250,.9) 52%,rgba(228,244,250,.95)),url("photos/IPC background.jpg") center/cover no-repeat;animation:none}
+.landing[data-theme="light"]::after{display:none}
+.landing[data-theme="light"] .brand{background:rgba(0,63,92,.1);border-color:rgba(0,63,92,.24);color:var(--navy)}
+.landing[data-theme="light"] .brand-logo{filter:none;opacity:.9}
+.landing[data-theme="light"] .brand-sep{background:rgba(0,63,92,.2)}
+.landing[data-theme="light"] .hero-copy{background:rgba(255,255,255,.78);border-color:rgba(0,63,92,.16);box-shadow:0 22px 58px rgba(0,63,92,.16)}
+.landing[data-theme="light"] h1{color:var(--navy)}
+.landing[data-theme="light"] .subtitle{color:var(--navy)}
+.landing[data-theme="light"] .lead{color:rgba(0,40,70,.82)}
+.landing[data-theme="light"] .hero-note{color:rgba(0,40,70,.82)}
+.landing[data-theme="light"] .theme-btn{background:rgba(0,63,92,.1);border-color:rgba(0,63,92,.22);color:var(--navy)}
+.landing[data-theme="light"] .theme-btn:hover{background:rgba(0,63,92,.18)}
+.landing[data-theme="light"] .theme-icon{transform:rotate(-16deg)}
+.landing[data-theme="light"] .theme-icon::before{width:16px;height:16px;background:transparent;box-shadow:inset -5px 0 0 0 currentColor;transform:translate(-50%,-50%)}
+@keyframes colorBreathLight{0%{background-color:#EAF7FC}42%{background-color:#D9F1FA}72%{background-color:#F3FAFD}100%{background-color:#EAF7FC}}
+@media(prefers-reduced-motion:reduce){.brand,h1,.subtitle,.lead,.hero-note,.section-band{animation:none}.program,.program-img,.theme-btn,.theme-icon,.theme-icon::before{transition:none}}
+</style>
+</head>
+<body>
+<main class="landing" id="landing">
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle dark/light mode" aria-label="Switch to light mode"><span class="theme-icon" aria-hidden="true"></span></button>
+  <section class="front">
+    <div class="brand"><img class="brand-logo" src="photos/who-wpro-logo-blue.png" alt="World Health Organization Western Pacific Region"><span class="brand-sep"></span><span class="brand-dot"></span>WHO WPRO &middot; IPC Monitoring Dashboards</div>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <h1>Regional IPC Progress</h1>
+        <div class="subtitle">Western Pacific Region, 2025-2030</div>
+        <p class="lead">Infection prevention and control (IPC) is a core health-system function that protects patients, health and care workers, families and communities from healthcare-associated infections (HAIs). Strong IPC also supports antimicrobial resistance containment, universal health coverage, patient safety, quality of care, and health security.</p>
+        <p class="lead">This dashboard presents regional and country-level progress on strengthening IPC in the Western Pacific Region. It is informed by the 2025 Western Pacific Regional IPC Survey, country benchmarking against the WHO Global Action Plan and Monitoring Framework on IPC, and HAI surveillance readiness assessments at national and health-care facility levels.</p>
+        <p class="hero-note">The dashboard is aligned with key global and regional guidance, including the WHO Global Strategy on IPC, the WHO Global Action Plan and Monitoring Framework on IPC 2024-2030, the WHO Global Report on IPC 2024, the WHO Minimum Requirements for IPC Programmes, and the Asia Pacific Health Security Action Framework. It also supports implementation of the Regional Action Plan on Strengthening IPC in the Western Pacific Region 2025-2030.</p>
+      </div>
+    </div>
+
+    <section class="section-band" aria-labelledby="coversTitle">
+      <div class="section-head">
+        <h2 id="coversTitle">What This Dashboard Covers</h2>
+        <p>Data should be interpreted as a tool for learning and improvement, taking into account differences in country contexts, health-system structures, and reporting capacity.</p>
+      </div>
+      <div class="coverage-grid">
+        <div class="coverage-item">IPC progress across eight Strategic Directions: governance, active IPC programmes, integration and coordination, workforce knowledge and career pathways, data for action, advocacy, research, and partnerships.</div>
+        <div class="coverage-item">Country and regional priorities for 2025-2030.</div>
+        <div class="coverage-item">HAI surveillance readiness at national and health-care facility levels.</div>
+        <div class="coverage-item">Monitoring and evaluation indicators, including 2025 baselines and targets for 2027 and 2030.</div>
+        <div class="coverage-item">Data quality and accountability, supporting evidence-based planning, technical assistance, and regional learning.</div>
+      </div>
+      <div class="divider" aria-hidden="true"></div>
+      <div class="programs" aria-label="Programme selection">
+        <button class="program gapme" type="button" onclick="openProgram('gapme')">
+          <img class="program-img" src="photos/IPC background.jpg" alt="">
+          <span class="program-shade" aria-hidden="true"></span>
+          <span class="program-body">
+            <span class="program-kicker">Dashboard for GAPME</span>
+            <span class="program-title">Global Action Plan and Monitoring Framework on IPC 2024-2030 (GAPME)</span>
+            <span class="program-copy">Regional progress views and country comparisons for eight strategic directions.</span>
+          </span>
+        </button>
+        <button class="program national" type="button" onclick="openProgram('hai')">
+          <img class="program-img" src="photos/Screenshot 2024-11-20 122628.png" alt="">
+          <span class="program-shade" aria-hidden="true"></span>
+          <span class="program-body">
+            <span class="program-kicker">Dashboard for HAI</span>
+            <span class="program-title">Healthcare-Associated Infections (HAI) Surveillance Readiness</span>
+            <span class="program-copy">National and facility-level results.</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="section-band guidance-band" aria-labelledby="guidanceTitle">
+      <div class="section-head">
+        <h2 id="guidanceTitle">Guiding Documents and Links</h2>
+        <p>Core global and regional IPC references used to frame the dashboard indicators, priorities, and interpretation.</p>
+      </div>
+      <ul class="docs-list">
+        <li><a href="https://www.who.int/publications/i/item/9789240080515" target="_blank" rel="noopener">WHO Global Strategy on Infection Prevention and Control</a></li>
+        <li><a href="https://www.who.int/teams/integrated-health-services/infection-prevention-control/draft-global-action-plan-and-monitoring-framework-on-ipc" target="_blank" rel="noopener">WHO Global Action Plan and Monitoring Framework on IPC, 2024-2030</a></li>
+        <li><a href="https://www.who.int/publications/i/item/9789240103986" target="_blank" rel="noopener">WHO Global Report on Infection Prevention and Control 2024</a></li>
+        <li><a href="https://www.who.int/publications/i/item/9789241516945" target="_blank" rel="noopener">WHO Minimum Requirements for IPC Programmes</a></li>
+        <li><a href="https://www.who.int/publications/i/item/9789290620396" target="_blank" rel="noopener">Asia Pacific Health Security Action Framework</a></li>
+        <li><a href="https://data.who.int/dashboards/ipc/global-progress-tracker" target="_blank" rel="noopener">Global IPC Progress Tracker</a></li>
+      </ul>
+    </section>
+  </section>
+</main>
+
+<section class="shell" id="shell" aria-live="polite">
+  <header class="topbar">
+    <img class="top-logo" src="photos/who-wpro-logo-blue.png" alt="World Health Organization Western Pacific Region">
+    <div class="switcher">
+      <button class="home-btn" type="button" onclick="showLanding()">Programme menu</button>
+      <button class="switch-btn" id="btnGapme" type="button" onclick="openProgram('gapme')">GAPME</button>
+      <button class="switch-btn" id="btnHai" type="button" onclick="openProgram('hai')">HAI Surveillance</button>
+    </div>
+  </header>
+  <div class="frame-wrap">
+    <iframe id="dashFrame" title="Selected IPC dashboard"></iframe>
+  </div>
+</section>
+
+<script>
+const PROGRAMMES={
+  hai:{file:'hai_combined.html'},
+  gapme:{file:'GAPME.html'}
+};
+function openProgram(key){
+  const p=PROGRAMMES[key]||PROGRAMMES.national;
+  document.getElementById('landing').style.display='none';
+  document.getElementById('shell').style.display='block';
+  document.getElementById('btnHai').classList.toggle('on',key==='hai');
+  document.getElementById('btnGapme').classList.toggle('on',key==='gapme');
+  const frame=document.getElementById('dashFrame');
+  if(!frame.src.endsWith(p.file)) frame.src=p.file;
+  document.getElementById('themeBtn').style.display='none';
+}
+function showLanding(){
+  document.getElementById('shell').style.display='none';
+  document.getElementById('landing').style.display='flex';
+  document.getElementById('themeBtn').style.display='';
+}
+function toggleTheme(){
+  const l=document.getElementById('landing');
+  const btn=document.getElementById('themeBtn');
+  const isLight=l.getAttribute('data-theme')==='light';
+  if(isLight){
+    l.removeAttribute('data-theme');
+    btn.setAttribute('aria-label','Switch to light mode');
+  }else{
+    l.setAttribute('data-theme','light');
+    btn.setAttribute('aria-label','Switch to dark mode');
+  }
+}
+</script>
+</body>
+</html>
+
