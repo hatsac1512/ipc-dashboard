@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAI Surveillance WPRO &mdash; Combined Dashboard 2026</title>
+<script src="assets/vendor/chart.umd.min.js"></script>
+<script src="assets/vendor/chartjs-plugin-datalabels.min.js"></script>
+<script src="assets/vendor/d3.min.js"></script>
+<script src="assets/vendor/topojson.min.js"></script>
+<script src="assets/vendor/countries-110m.js"></script>
+<script src="./hai_facility_data.js"></script>
+<style>
+:root{--bg:#EEF1F6;--sf:#FFFFFF;--sf2:#F4F5F7;--bd:#E0E4EA;--navy:#003F5C;--orange:#D85A1A;--orange-lt:#F9EDE5;--blue:#009ADE;--blue-lt:#EAF0FA;--green:#0F7A5A;--green-lt:#E4F4EE;--red:#C0392B;--red-lt:#FDEEEE;--amber:#D8941A;--amber-lt:#FFF4D9;--text:#212529;--muted:#6C757D;--subtle:#ADB5BD;--font:Roboto,"Noto Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--r:10px;--r-sm:6px;--shadow:0 2px 12px rgba(0,63,92,.07)}
+*{margin:0;padding:0;box-sizing:border-box}html{overflow-x:hidden}canvas{max-width:100%!important}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+/* header */
+.hd{background:var(--navy);padding:12px 24px;display:flex;align-items:center;justify-content:flex-start;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(27,43,69,.3);min-height:54px}
+.hd-left{display:flex;align-items:center;gap:0;min-width:0}
+.hd-l h1{font-size:16px;font-weight:400;color:#fff;line-height:24px}
+.hd-l p{display:none}.hd-badges{display:none}
+.badge{font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;white-space:nowrap;line-height:18px}
+.badge-o{background:var(--orange);color:#fff}.badge-g{background:rgba(255,255,255,.12);color:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.15)}
+/* tabs */
+.tab-bar{background:var(--sf);border-bottom:2px solid var(--bd);padding:0 24px;overflow-x:auto;position:sticky;top:54px;z-index:90;box-shadow:var(--shadow)}
+.tab-bar::-webkit-scrollbar{display:none}.tabs{display:flex;width:fit-content}
+.tab{padding:11px 22px;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;font-family:var(--font);font-size:16px;font-weight:400;color:var(--muted);white-space:nowrap;transition:all .18s;margin-bottom:-2px;line-height:24px}
+.tab:hover{color:var(--navy);background:var(--sf2)}.tab.on{color:var(--orange);border-bottom-color:var(--orange);background:var(--orange-lt)}
+/* compact selbar for By Country */
+.selbar{background:var(--sf);border-bottom:1px solid var(--bd);box-shadow:0 2px 10px rgba(0,63,92,.05);padding:10px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:104px;z-index:89}
+.nav-btn{width:34px;height:38px;border:1.5px solid var(--bd);background:var(--sf);border-radius:var(--r-sm);font-size:18px;color:var(--navy);cursor:pointer;font-weight:700;line-height:1}
+.nav-btn:hover{border-color:var(--orange);color:var(--orange)}
+.ct-sel-dd{appearance:none;background:var(--sf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235A6374' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;border:1.5px solid var(--bd);color:var(--navy);font-family:var(--font);font-size:15px;font-weight:700;padding:8px 36px 8px 14px;border-radius:var(--r-sm);min-width:220px;cursor:pointer}
+.ct-sel-dd:focus{outline:none;border-color:var(--orange)}
+.s-inp{border:1.5px solid var(--bd);border-radius:var(--r-sm);font-family:var(--font);font-size:14px;padding:8px 12px;min-width:140px}.s-inp:focus{outline:none;border-color:var(--orange)}
+.fpill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--bd);background:var(--sf);color:var(--muted);font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fpill:hover{border-color:var(--orange);color:var(--orange)}.fpill.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.hl-strip{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.hl{border:1px solid var(--bd);border-radius:var(--r-sm);padding:5px 12px;min-width:84px;background:var(--sf2)}
+.hl .l{font-size:10px;color:var(--muted);line-height:14px;text-transform:uppercase;letter-spacing:.03em}
+.hl .v{font-size:19px;font-weight:800;line-height:24px;color:var(--navy)}
+.hl.nat-hl{background:var(--green-lt);border-color:rgba(15,122,90,.3)}.hl.nat-hl .v{color:var(--green)}
+.hl.fac-hl{background:var(--orange-lt);border-color:rgba(216,90,26,.3)}.hl.fac-hl .v{color:var(--orange)}
+/* content */
+.wrap{max-width:1360px;margin:0 auto;padding:16px 22px 50px}.sec{display:none}.sec.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.kp{background:var(--sf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);border-top:3px solid var(--bd)}
+.kp.ko{border-top-color:var(--orange)}.kp.kb{border-top-color:var(--blue)}.kp.kg{border-top-color:var(--green)}.kp.kn{border-top-color:var(--navy)}.kp.kr{border-top-color:var(--red)}
+.kp-l{font-size:14px;color:var(--muted);font-weight:600;line-height:21px;margin-bottom:5px}
+.kp-v{font-size:24px;font-weight:700;color:var(--navy);line-height:30px}.kp-s{font-size:12px;color:var(--subtle);line-height:18px;margin-top:3px}
+.cd{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.cd-t{font-size:18px;font-weight:700;color:var(--navy);line-height:22.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cd-t::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--orange);flex-shrink:0}
+.fig-tag{font-size:12px;font-weight:500;background:var(--orange-lt);color:var(--orange);padding:2px 9px;border-radius:20px;border:1px solid rgba(216,90,26,.25);line-height:18px}
+.fig-sub{font-size:14px;color:var(--muted);margin:-4px 0 13px;line-height:24.5px}
+.note-box{font-size:14px;color:var(--muted);line-height:21px;padding:9px 12px;background:var(--sf2);border-radius:var(--r-sm);border-left:3px solid var(--orange)}
+.tab-intro{position:relative;overflow:hidden;color:#EAF6FB;line-height:1.5;background:linear-gradient(135deg,#004A63 0%,#087D96 100%);border:1px solid rgba(255,255,255,.14);border-radius:var(--r);padding:26px 28px 30px;margin:6px 0 16px;box-shadow:0 12px 34px rgba(0,63,92,.18)}
+.tab-intro::after{content:"";position:absolute;right:-78px;top:-120px;width:390px;height:390px;border:44px solid rgba(255,255,255,.09);border-radius:50%;pointer-events:none}
+.tab-intro>*{position:relative;z-index:1}
+.tab-intro .intro-kicker{font-size:13px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:rgba(234,246,251,.72);margin-bottom:8px}
+.tab-intro h2{font-size:30px;line-height:1.18;color:#fff;font-weight:800;max-width:980px;margin:0 0 12px;letter-spacing:0}
+.tab-intro p{font-size:17px;line-height:1.55;color:rgba(234,246,251,.88);max-width:1120px;margin:0 0 22px}
+.intro-pill-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.intro-pill{min-height:42px;display:flex;align-items:center;padding:9px 13px;border:1px solid rgba(255,255,255,.2);border-radius:var(--r-sm);background:rgba(255,255,255,.09);color:rgba(255,255,255,.9);font-size:14px;font-weight:800;line-height:1.25;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.intro-pill b{color:#fff;margin-right:5px}
+.tab-intro.fac{background:linear-gradient(135deg,#6E3511 0%,#0B748C 100%)}
+.radar-figure{background:#fff;padding:2px 0 0}
+.radar-figure-title{font-size:24px;font-weight:700;color:var(--navy);text-align:center;line-height:30px}
+.radar-figure-sub{font-size:14px;color:var(--muted);text-align:center;margin-top:2px;line-height:24.5px}
+.radar-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:760px;margin:24px auto 20px}
+.radar-metric{background:#FBF7F1;border:1px solid #E9DED0;border-radius:6px;padding:13px 16px 12px;min-height:118px}
+.radar-metric-lbl{font-size:14px;font-weight:600;color:var(--muted);line-height:21px;margin-bottom:8px}
+.radar-metric-val{font-size:32px;font-weight:700;color:var(--navy);line-height:38px}.radar-metric-val.green{color:#2F7D4D}.radar-metric-val.red{color:#A72D2F}
+.radar-metric-sub{font-size:14px;color:var(--text);line-height:21px;margin-top:10px}
+.radar-wrap{height:680px;max-width:980px;margin:0 auto;position:relative}
+.overview-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px;align-items:stretch}
+.overview-summary-grid>.cd{margin-bottom:0;min-width:0;height:100%}
+.overview-summary-grid>.cd.nat{border-top:4px solid var(--green)}
+.overview-summary-grid>.cd.fac{border-top:4px solid var(--orange)}
+.overview-summary-grid .radar-wrap{height:470px;max-width:100%}
+.overview-summary-grid .radar-metrics{gap:6px;margin:10px auto 8px;max-width:620px}
+.overview-summary-grid .radar-metric{min-height:66px;padding:7px 8px;display:flex;flex-direction:column;justify-content:center}
+.overview-summary-grid .radar-metric-lbl{font-size:11px;line-height:15px;margin-bottom:2px}
+.overview-summary-grid .radar-metric-val{font-size:20px;line-height:24px}
+.overview-summary-grid .radar-metric-sub{font-size:11px;line-height:14px;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.overview-summary-grid .radar-figure-title{font-size:20px;line-height:25px}
+.overview-summary-grid .radar-figure-sub,.overview-summary-grid .fig-sub{font-size:12px;line-height:18px}
+.overview-summary-grid .leg{gap:10px;margin-bottom:10px}
+.overview-summary-grid .leg-i{font-size:12px;line-height:18px}
+.overview-summary-grid .heatmap-card{display:flex;flex-direction:column}
+.overview-summary-grid .heatmap-card .hm-wrap{flex:1;display:flex}
+.overview-summary-grid .heatmap-card .hm{height:100%}
+.overview-summary-grid .heatmap-card .note-box{font-size:12px;line-height:18px;margin-top:10px}
+.leg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.leg-i{display:flex;align-items:center;gap:5px;font-size:14px;color:var(--muted);line-height:21px}
+.leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.hm-wrap{overflow-x:auto;border-radius:var(--r-sm);border:1px solid var(--bd)}
+.heatmap-code-note{display:flex;flex-direction:column;gap:3px;margin:0 0 8px;padding:8px 10px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r-sm);color:var(--muted);font-size:11px;line-height:16px}
+.heatmap-code-note span{display:block}
+.heatmap-code-note b{color:var(--navy);font-weight:800}
+.hm{width:100%;border-collapse:collapse;font-family:var(--font)}
+.hm th{background:var(--navy);color:rgba(255,255,255,.88);padding:9px 8px;font-weight:600;text-align:center;font-size:12px;white-space:normal;line-height:18px;min-width:120px}
+.hm th:first-child{text-align:left;min-width:185px;padding-left:12px;position:sticky;left:0;z-index:2}
+.hm td{padding:8px 6px;text-align:center;font-weight:600;border-bottom:1px solid var(--bd);font-size:14px;line-height:21px}
+.hm td:first-child{text-align:left;color:var(--navy);padding-left:12px;background:var(--sf);position:sticky;left:0}
+.hm tbody tr:hover td{background:rgba(27,43,69,.03)}.hm tbody tr:hover td:first-child{background:var(--sf2)}
+.hm .wpro-r td{background:var(--navy)!important;color:#fff!important;font-weight:700}
+.hm-overview-wrap{overflow-x:hidden}.hm.hm-overview{min-width:0;table-layout:fixed}
+.hm.hm-overview th,.hm.hm-overview td{font-size:11px;line-height:15px;padding:7px 5px;font-weight:600;min-width:0;word-break:normal;overflow-wrap:anywhere}
+.hm.hm-overview th:first-child,.hm.hm-overview td:first-child{min-width:0;position:static}
+.hm-ovr-nat th:first-child,.hm-ovr-nat td:first-child{width:18%}
+.hm-ovr-nat th:not(:first-child),.hm-ovr-nat td:not(:first-child){width:10.25%;min-width:0}
+.hm-ovr-fac th:first-child,.hm-ovr-fac td:first-child{width:18%}
+.hm-ovr-fac th:not(:first-child),.hm-ovr-fac td:not(:first-child){width:10.25%;min-width:0}
+/* income / readiness tables */
+.sort-btn{padding:6px 13px;border-radius:var(--r-sm);border:1.5px solid var(--bd);background:var(--sf);color:var(--muted);font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.sort-btn:hover{border-color:var(--navy);color:var(--navy)}.sort-btn.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.dd-sel{appearance:none;background:var(--sf);border:1.5px solid var(--bd);color:var(--text);font-family:var(--font);font-size:16px;padding:9px 38px 9px 14px;border-radius:var(--r-sm);cursor:pointer;box-shadow:var(--shadow);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235A6374' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;min-width:380px}
+.dd-sel:focus{outline:none;border-color:var(--orange)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:21px}
+.tbl th{background:var(--navy);color:rgba(255,255,255,.88);padding:8px 10px;text-align:left;font-weight:600;font-size:12px;line-height:18px;position:sticky;top:0;z-index:1}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--bd);color:var(--text);vertical-align:top}
+.tbl tbody tr:hover{background:var(--sf2)}
+.tbl .muted-cell{color:var(--muted);font-weight:600;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:5px 8px;display:inline-flex;line-height:18px}
+.facility-count-table th:nth-child(n+3),.facility-count-table td:nth-child(n+3){text-align:center}
+.facility-count-table .subtotal td{background:#D7DCE2;font-weight:800;color:var(--navy)}
+.facility-count-table .grand-total td{background:var(--navy);font-weight:900;color:#fff}
+.pct-bar{display:flex;align-items:center;gap:8px}.pct-trk{flex:1;height:12px;background:var(--sf2);border-radius:4px;border:1px solid var(--bd);overflow:hidden;min-width:60px}
+.pct-fil{height:100%;border-radius:4px}
+/* income income groups */
+.inc-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.ik{padding:14px 16px;border-radius:var(--r-sm);border-left:4px solid}
+.ik-wpro{background:rgba(216,90,26,.08);border-color:var(--orange)}.ik-hic{background:rgba(15,122,90,.08);border-color:var(--green)}.ik-lmic{background:rgba(26,95,168,.08);border-color:var(--blue)}
+.ik-lbl{font-size:14px;font-weight:600;line-height:21px;margin-bottom:4px}
+.ik-wpro .ik-lbl{color:var(--orange)}.ik-hic .ik-lbl{color:var(--green)}.ik-lmic .ik-lbl{color:var(--blue)}
+.ik-val{font-size:24px;font-weight:700;color:var(--navy);line-height:30px}.ik-sub{font-size:14px;color:var(--muted);line-height:21px;margin-top:2px}
+/* facility heatmap color classes */
+.pct-good{background:var(--green-lt);color:var(--green)}.pct-mid{background:var(--orange-lt);color:var(--orange)}.pct-warn{background:rgba(100,116,139,.12);color:#64748B}.pct-bad{background:var(--red-lt);color:var(--red)}.pct-na{background:var(--sf2);color:var(--subtle)}
+/* facility mini kpis */
+.mini-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.mini{padding:12px 14px;border-radius:var(--r-sm);border-left:4px solid var(--bd);background:var(--sf);box-shadow:var(--shadow)}
+.mini.b{background:var(--blue-lt);border-color:var(--blue)}.mini.g{background:var(--green-lt);border-color:var(--green)}.mini.o{background:var(--orange-lt);border-color:var(--orange)}.mini.n{background:#EDF4F8;border-color:var(--navy)}
+.mini .lb{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:3px}.mini .vl{font-size:22px;font-weight:700;color:var(--navy);line-height:28px}.mini .ds{font-size:12px;color:var(--muted);margin-top:3px}
+/* facility country profile */
+.dom-overview{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.dom-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.dom-kicker{font-size:14px;font-weight:700;color:var(--muted)}.dom-country{font-size:16px;font-weight:800;color:var(--navy)}
+.dom-row{display:grid;grid-template-columns:46px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+.dom-row:last-of-type{border-bottom:0}
+.dom-sec{font-size:14px;font-weight:900;color:var(--navy);text-align:right}
+.dom-chips{display:flex;gap:5px;flex-wrap:wrap}
+.dom-chip{min-width:30px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;padding:0 7px;font-size:10.5px;font-weight:800;color:#fff}
+.ov-box{min-width:30px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;padding:0 7px;font-size:10.5px;font-weight:800;color:#fff;line-height:1}
+.dom-chip.high{background:var(--green)}.dom-chip.mid{background:#74C49A;color:#0a4a36}.dom-chip.low{background:#64748B}.dom-chip.verylow{background:var(--red)}.dom-chip.na{background:var(--subtle)}
+/* facility indicator profile */
+.cp-profile-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.cp-profile-title{font-size:18px;font-weight:700;color:var(--navy);line-height:22.5px}.cp-profile-sub{font-size:14px;color:var(--muted);line-height:21px;margin-top:2px}
+.cp-stat{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--bd);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:500;color:var(--muted);line-height:18px}
+.cp-stat-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.cp-sections{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cs{border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--bd)}
+.cs-hdr{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sec)}
+.cs-title{font-size:14px;font-weight:600;color:#fff;line-height:21px}.cs-pct{font-size:16px;font-weight:700;color:#fff;line-height:24px}
+.cs-body{padding:10px 12px;background:var(--sf)}
+.ind-row{display:grid;grid-template-columns:44px minmax(0,1fr) 112px;gap:8px;align-items:start;margin-bottom:7px;padding:7px 8px;border-radius:6px;border-left:4px solid transparent;font-size:14px;line-height:21px}
+.ind-code{font-size:12px;font-weight:800;color:var(--muted);line-height:18px;margin-top:1px}.ind-lbl{color:var(--text)}
+.ind-val{font-size:12px;font-weight:800;color:var(--muted);background:var(--sf2);padding:3px 7px;border-radius:8px;text-align:right;line-height:17px;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.ind-nn{font-size:11px;font-weight:700;color:var(--muted);line-height:15px}
+.pct-bar-fac{display:flex;align-items:center;gap:8px;min-width:150px}
+.pct-trk-fac{flex:1;height:12px;background:var(--sf2);border-radius:4px;border:1px solid var(--bd);overflow:hidden}
+.pct-fil-fac{height:100%;border-radius:4px}.pct-txt{width:50px;text-align:right;font-weight:700;color:var(--navy)}
+/* national by-country indicator profile */
+.inc-pill{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;white-space:nowrap}
+.inc-HIC{background:var(--green-lt);color:var(--green)}.inc-LMIC{background:var(--blue-lt);color:var(--blue)}
+.cp-domain-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* source band + combined layout */
+.src-band{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r);color:#fff;margin:6px 0 12px;font-weight:800;font-size:15px}
+.src-band .s{font-size:12px;opacity:.9;margin-left:auto;font-weight:600}
+.src-band.nat{background:linear-gradient(90deg,#0F7A5A,#0c6149)}
+.src-band.fac{background:linear-gradient(90deg,#D85A1A,#b8470f)}
+.parallel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:stretch}
+.parallel .col{min-width:0;display:flex;flex-direction:column}
+.col-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r);color:#fff;margin-bottom:12px;font-weight:800;font-size:15px}
+.col-head.nat{background:linear-gradient(90deg,#0F7A5A,#0c6149)}
+.col-head.fac{background:linear-gradient(90deg,#D85A1A,#b8470f)}
+.col-head .s{font-size:12px;opacity:.9;margin-left:auto;font-weight:600}
+.sec-div{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin:2px 2px 9px;text-transform:uppercase;letter-spacing:.03em}
+.sec-div::after{content:"";flex:1;height:2px;border-radius:2px}
+.sec-div.nat{color:#0F7A5A}.sec-div.nat::after{background:rgba(15,122,90,.25)}
+.sec-div.fac{color:#D85A1A}.sec-div.fac::after{background:rgba(216,90,26,.25)}
+.sec-div.both{color:var(--navy)}.sec-div.both::after{background:var(--bd)}
+/* aligned S↔T grids (overview + detail) */
+.ov-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px;align-items:stretch}
+.ovh{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#fff;padding:7px 12px;border-radius:var(--r-sm);flex-wrap:wrap}
+.ovh.nat{background:#0F7A5A}.ovh.fac{background:#D85A1A}
+.ovh-leg{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.ovh .cp-stat,.ovh .leg-i{color:#fff;font-size:11px}
+.ovh .cp-stat{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22)}
+.ovc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r-sm);padding:8px 11px;display:flex;align-items:center;gap:10px}
+.ovc.nat{border-left:3px solid #0F7A5A}.ovc.fac{border-left:3px solid #D85A1A}
+.ovc-tag{font-size:13px;font-weight:900;color:var(--navy);min-width:26px;text-align:center;flex-shrink:0}
+.ovc-dots{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.ovc-yt{font-size:11px;font-weight:800;flex-shrink:0;min-width:40px;text-align:right}
+.ovc-empty{color:var(--subtle);font-size:14px;width:100%;text-align:center;font-weight:700}
+.dt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;align-items:start}
+.dt-cell{min-width:0}
+@media(max-width:1100px){.ov-grid,.dt-grid{grid-template-columns:1fr}}
+/* readiness strip (Y/N/DK) */
+.cap-strip{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--bd)}
+.cap-cell{padding:9px 4px 8px;text-align:center;color:#fff;min-height:120px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.cap-cell.Y{background:#0F7A5A}.cap-cell.N{background:#C0392B}.cap-cell.DK{background:#8C96A8}
+.cap-num{font-size:15px;font-weight:800;line-height:1}
+.cap-name{font-size:9px;line-height:1.18;opacity:.95;flex:1}
+.cap-val{font-size:11px;font-weight:800;letter-spacing:.03em}
+.cap-leg{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.cap-leg .i{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.cap-leg .d{width:11px;height:11px;border-radius:3px}
+/* national summary card */
+.nat-sc{display:flex;align-items:center;gap:16px;padding:14px 16px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:10px}
+.ns-num{font-size:34px;font-weight:800;color:var(--green);line-height:1}
+.ns-lbl{font-size:11px;color:var(--muted);text-align:center;margin-top:5px;line-height:1.3}
+.ns-hi{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
+.ns-row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border-radius:var(--r-sm);font-size:12.5px}
+.ns-row.good{background:var(--green-lt)}.ns-row.bad{background:var(--red-lt)}.ns-row.dk-r{background:rgba(140,150,168,.12)}
+.ns-row .t{font-weight:700;white-space:nowrap}.ns-row.good .t{color:var(--green)}.ns-row.bad .t{color:var(--red)}.ns-row.dk-r .t{color:#8C96A8}
+.ns-row .v{font-weight:700;color:var(--navy);text-align:right}
+/* geo cards */
+.nat-geo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.geo-card{position:relative;border-radius:var(--r);overflow:hidden;height:168px;box-shadow:var(--shadow);border:1px solid var(--bd);background:var(--sf2)}
+.geo-card .lbl{position:absolute;inset:auto 0 0 0;background:linear-gradient(transparent,rgba(0,35,64,.82));color:#fff;font-size:11px;font-weight:600;line-height:1.3;padding:18px 10px 7px;z-index:2}
+.geo-flag{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:14px}
+.geo-flag img{max-width:100%;max-height:100%;object-fit:contain;border:1px solid var(--bd);box-shadow:0 1px 5px rgba(0,0,0,.18)}
+.geo-map{width:100%;height:100%}.geo-map svg{width:100%;height:100%;display:block}
+/* fac stats */
+.fac-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.fstat{display:flex;align-items:baseline;gap:8px;background:var(--sf);border:1px solid var(--bd);border-left:3px solid var(--bd);border-radius:var(--r-sm);padding:7px 13px;box-shadow:var(--shadow)}
+.fstat .l{font-size:12px;color:var(--muted);font-weight:600}.fstat .v{font-size:18px;font-weight:800;color:var(--navy)}
+.fstat.fn{border-left-color:var(--navy)}.fstat.fb{border-left-color:var(--blue)}.fstat.fg{border-left-color:var(--green)}.fstat.fo{border-left-color:var(--orange)}
+.fac-review-panel{background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--orange);border-radius:var(--r-sm);padding:11px 13px;box-shadow:var(--shadow);margin-top:10px}
+.fac-review-title{font-size:12px;font-weight:900;color:var(--orange);letter-spacing:.03em;text-transform:uppercase;margin-bottom:8px}
+.fac-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fac-review-item{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:9px 10px;min-width:0}
+.fac-review-label{font-size:11px;font-weight:800;color:var(--muted);line-height:1.25;margin-bottom:4px}
+.fac-review-value{font-size:17px;font-weight:900;color:var(--navy);line-height:1.2}
+.fac-review-desc{font-size:11px;color:var(--muted);line-height:1.25;margin-top:4px}
+.top-empty-fill{flex:1;display:flex;align-items:center;justify-content:center;background:var(--sf);border:1px dashed var(--bd);border-radius:var(--r-sm);padding:18px;color:var(--muted);font-size:13px;text-align:center}
+/* chart pair */
+.chart-pair{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;margin-bottom:12px}
+.chart-pair>.cd{margin-bottom:0}
+.fac-ch{position:relative;height:320px;min-width:0}
+.ct-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:8px 0 16px}
+.ct-chart-card{margin-bottom:0;border-top:4px solid var(--bd);min-width:0}
+.ct-chart-card.nat{border-top-color:var(--green)}
+.ct-chart-card.fac{border-top-color:var(--orange)}
+.ct-chart-sub{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:19px}
+.ct-chart-legend{display:flex;align-items:center;justify-content:center;gap:16px;min-height:22px;margin:-2px 0 8px;font-size:12px;font-weight:800;color:#475569}
+.ct-chart-legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.ct-chart-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.ct-chart-legend .wpro i{background:#D85A1A}
+.ct-chart-legend .country i{background:#009900}
+.ct-chart-canvas{position:relative;min-width:0}
+.ct-chart-canvas.radar{height:390px}
+.ct-chart-canvas.bar{height:430px}
+.ct-empty-chart{height:220px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13px;line-height:1.5;background:var(--sf2);border:1px dashed var(--bd);border-radius:var(--r-sm);padding:18px}
+/* nat detail card */
+.n-dcard{border:1px solid var(--bd);border-radius:var(--r-sm);overflow:hidden;margin-bottom:10px}
+.n-dcard .dh{background:var(--navy);padding:8px 12px;display:flex;align-items:center;gap:8px}
+.n-dcard .dtag{color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+.n-dcard .dnm{font-size:13px;font-weight:700;color:#fff}
+.n-dcard .pc{font-size:13px;font-weight:800;color:#fff;margin-left:auto}
+.n-dcard .dpbar{height:5px;background:var(--sf2)}.n-dcard .dpbar>i{display:block;height:100%}
+.n-dcard .dbody{padding:8px 10px}
+.desc-tog{font-size:15px;font-weight:800;line-height:1;color:#fff;width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.55);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none}
+.n-irow{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:5px;margin-bottom:3px;background:rgba(0,0,0,.015);min-height:34px}
+.n-ibadge{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;margin-top:1px}
+.n-ilbl{flex:1;font-size:13px;color:var(--navy);line-height:1.4}
+/* fac detail */
+.fsec{border:1px solid var(--bd);border-radius:var(--r-sm);overflow:hidden;margin-bottom:10px}
+.fsec .fsh{background:var(--navy);padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.fsec .fsh .nm{font-size:13px;font-weight:700;color:#fff}.fsec .fsh .pc{font-size:13px;font-weight:800;color:#fff}
+.fsec .fsbody{padding:8px 10px}
+.fsec .dpbar{height:5px;background:var(--sf2)}.fsec .dpbar>i{display:block;height:100%}
+.fprow{display:grid;grid-template-columns:1fr 168px;gap:8px;align-items:center;padding:6px 8px;border-radius:5px;margin-bottom:3px;background:rgba(0,0,0,.015);min-height:34px}
+.fprow:last-child{border-bottom:0}
+.fpl{font-size:13px;color:var(--navy);line-height:1.4}.fpl b{color:var(--muted);font-size:11px;margin-right:4px}
+.fpbar{display:flex;align-items:center;gap:6px}
+.fpbar .fptr{flex:1;height:11px;background:var(--sf2);border:1px solid var(--bd);border-radius:4px;overflow:hidden}
+.fpbar .fptr>i{display:block;height:100%}
+.fpbar .fpv{font-size:11px;font-weight:800;min-width:92px;text-align:right;white-space:nowrap}
+.ft{text-align:center;padding:20px 0 12px;font-size:12px;color:var(--subtle);line-height:18px;border-top:1px solid var(--bd);margin-top:4px}
+/* responsive */
+@media(max-width:1100px){.parallel{grid-template-columns:1fr}.col-head{position:static}.hl-strip{margin-left:0;width:100%}.kpis{grid-template-columns:repeat(3,1fr)}.radar-metrics{max-width:none}.cp-sections{grid-template-columns:1fr}}
+@media(max-width:900px){.fac-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:768px){.kpis{grid-template-columns:repeat(2,1fr)}.chart-pair,.ct-chart-grid,.overview-summary-grid{grid-template-columns:1fr}.nat-geo{grid-template-columns:1fr}.mini-kpis{grid-template-columns:1fr 1fr}.fac-review-grid{grid-template-columns:1fr}.radar-wrap,.overview-summary-grid .radar-wrap{height:460px}.cp-domain-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.kpis{grid-template-columns:1fr 1fr}.dd-sel{min-width:0;width:100%}.fac-ch{height:260px}}
+/* ===== MOBILE RESPONSIVE PATCH (additive, max-width only) ===== */
+@media(max-width:768px){
+  .dd-sel{min-width:0;width:100%}
+  .ct-sel-dd{min-width:0;flex:1}
+  .tbl{min-width:560px}              /* force horizontal scroll inside .hm-wrap instead of crushing columns */
+  .radar-metrics{grid-template-columns:1fr}
+  .tab-intro{padding:22px 18px 24px}
+  .tab-intro h2{font-size:24px}
+  .tab-intro p{font-size:15px}
+  .intro-pill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .radar-metrics{grid-template-columns:1fr;gap:10px}
+  .radar-metric{min-height:0;padding:10px 14px}
+  .radar-metric-val{font-size:26px;line-height:32px}
+}
+@media(max-width:480px){
+  .wrap{padding-left:12px;padding-right:12px}
+  .hd{padding:10px 14px;gap:10px}
+  .hd-l h1{font-size:14px;line-height:20px}
+  .selbar{padding:10px 14px}
+  .radar-wrap{height:360px}          /* overrides the 460px (768) rule via source order */
+  .minreq-wrap{height:320px}
+  .cap-strip{grid-template-columns:repeat(4,1fr)}   /* 8-pillar strip -> 2 rows of 4 */
+  .cap-cell{min-height:96px}
+  .fpill{padding:8px 14px}
+  .nav-btn{height:40px}
+}
+</style>
+</head>
+<body>
+<div class="hd">
+  <div class="hd-left"><div class="hd-l"><h1>HAI Surveillance WPRO &mdash; Combined Dashboard</h1><p id="metaLine"></p></div></div>
+  <div class="hd-badges"><span class="badge badge-o">WPRO</span><span class="badge badge-g">WHO &middot; 2026</span></div>
+</div>
+<div class="tab-bar"><div class="tabs">
+  <button class="tab on" onclick="sw('ov',this)">Overview</button>
+  <button class="tab" onclick="sw('ct',this)">By Country</button>
+  <button class="tab" onclick="sw('inc',this)">By Income</button>
+  <button class="tab" onclick="sw('lvl',this)">By level of care</button>
+</div></div>
+
+<div class="selbar" id="selbar" style="display:none">
+  <div style="display:flex;align-items:center;gap:6px">
+    <button class="nav-btn" onclick="ctStep(-1)">&#8249;</button>
+    <select class="ct-sel-dd" id="ctSelDD" onchange="ctSelectChange(this.value)"></select>
+    <button class="nav-btn" onclick="ctStep(1)">&#8250;</button>
+  </div>
+  <input class="s-inp" id="ctSrch" placeholder="Search country&hellip;" oninput="ctApplyFilter()">
+  <div style="display:flex;gap:6px">
+    <button class="fpill on" data-g="ALL" onclick="ctSetGrp('ALL',this)">All</button>
+    <button class="fpill" data-g="HIC" onclick="ctSetGrp('HIC',this)">HIC</button>
+    <button class="fpill" data-g="LMIC" onclick="ctSetGrp('LMIC',this)">LMIC</button>
+  </div>
+  <div class="hl-strip" id="ctHls"></div>
+</div>
+
+<div class="wrap">
+<!-- TAB 1: OVERVIEW -->
+<div id="s-ov" class="sec on">
+  <div class="tab-intro">
+    <div class="intro-kicker">Overview</div>
+    <h2>Where the Western Pacific Region stands on HAI surveillance readiness</h2>
+    <p>This overview brings national N1-N8 totals and facility readiness results into one pathway, showing regional summaries, country achievement patterns, and the major readiness gaps across the HAI surveillance system.</p>
+    <div class="intro-pill-grid">
+      <div class="intro-pill"><b>N1</b> National IPC Programme</div>
+      <div class="intro-pill"><b>N2</b> HAI Surveillance Governance</div>
+      <div class="intro-pill"><b>N3</b> Strategic Planning</div>
+      <div class="intro-pill"><b>N4</b> Data Collection</div>
+      <div class="intro-pill"><b>N5</b> Data Analysis</div>
+      <div class="intro-pill"><b>N6</b> Interpretation</div>
+      <div class="intro-pill"><b>N7</b> Communication &amp; Feedback</div>
+      <div class="intro-pill"><b>N8</b> Monitoring &amp; Evaluation</div>
+    </div>
+  </div>
+  <div class="src-band nat">Regional Summary HAI Surveillance Readiness</div>
+  <div class="overview-summary-grid">
+    <div class="cd nat">
+      <div class="radar-figure">
+        <div class="radar-figure-title">Spider Chart &mdash; National-level HAI Surveillance Readiness</div>
+        <div class="radar-figure-sub">WPRO regional profile across N1-N8 domains</div>
+        <div class="radar-metrics" id="nat-radarMetrics">
+          <div class="radar-metric"><div class="radar-metric-lbl">Highest</div><div class="radar-metric-val green">70.3%</div><div class="radar-metric-sub">N1: National IPC Programme</div></div>
+          <div class="radar-metric"><div class="radar-metric-lbl">Lowest</div><div class="radar-metric-val red">33.9%</div><div class="radar-metric-sub">N8: National Monitoring &amp; Evaluation</div></div>
+          <div class="radar-metric"><div class="radar-metric-lbl">Average</div><div class="radar-metric-val">45.3%</div><div class="radar-metric-sub">N1-N8</div></div>
+        </div>
+        <div class="radar-wrap"><canvas id="nat-c1"></canvas></div>
+      </div>
+    </div>
+    <div class="cd fac">
+      <div class="radar-figure">
+        <div class="radar-figure-title">Spider Chart &mdash; Facility-level HAI Surveillance Readiness</div>
+        <div class="radar-figure-sub">WPRO regional profile across F1-F8 domains</div>
+        <div class="radar-metrics" id="fac-radarMetrics"></div>
+        <div class="radar-wrap"><canvas id="fac-radarChart"></canvas></div>
+      </div>
+    </div>
+    <div class="cd heatmap-card nat">
+      <div class="cd-t">Heatmap &mdash; National-level HAI Surveillance Readiness by Country/Area</div>
+      <div class="fig-sub">Each cell shows country/area readiness across N1-N8 domains.</div>
+      <div class="leg">
+        <div class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>75&ndash;100%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:#C99000"></span>50&ndash;74%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:#B45309"></span>25&ndash;49%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>0&ndash;24%</div>
+      </div>
+      <div class="heatmap-code-note" id="nat-hmCodeNote"></div>
+      <div class="hm-wrap hm-overview-wrap"><table class="hm hm-overview hm-ovr-nat" id="nat-hmTbl"></table></div>
+      <div class="note-box"><strong>Color coding:</strong> Green 75&ndash;100% &middot; Yellow 50&ndash;74% &middot; Amber 25&ndash;49% &middot; Red 0&ndash;24%. <strong>WPRO Regional row</strong> (navy) = regional N1-N8 readiness percentage.</div>
+    </div>
+    <div class="cd heatmap-card fac">
+      <div class="cd-t">Heatmap &mdash; Facility-level HAI Surveillance Readiness by Country/Area</div>
+      <div class="fig-sub">Each cell shows country/area readiness across F1-F8 domains.</div>
+      <div class="leg">
+        <div class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>75&ndash;100%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:#C99000"></span>50&ndash;74%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:#B45309"></span>25&ndash;49%</div>
+        <div class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>0&ndash;24%</div>
+      </div>
+      <div class="heatmap-code-note" id="fac-hmCodeNote"></div>
+      <div class="hm-wrap hm-overview-wrap"><table class="hm hm-overview hm-ovr-fac" id="fac-heatmapTbl"></table></div>
+      <div class="note-box"><strong>Color coding:</strong> Green 75&ndash;100% &middot; Yellow 50&ndash;74% &middot; Amber 25&ndash;49% &middot; Red 0&ndash;24%. WPRO Regional row summarizes all 604 facilities.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: BY COUNTRY -->
+<div id="s-ct" class="sec">
+  <div class="tab-intro">
+    <div class="intro-kicker">By Country</div>
+    <h2>Country-level readiness profile across national and facility systems</h2>
+    <p>Select a country or area to compare national N1-N8 readiness with facility-level F-domain results side by side, including bar charts and detailed indicator descriptions.</p>
+    <div class="intro-pill-grid">
+      <div class="intro-pill"><b>1</b> Choose country / area</div>
+      <div class="intro-pill"><b>2</b> Compare national readiness</div>
+      <div class="intro-pill"><b>3</b> Review facility results</div>
+      <div class="intro-pill"><b>4</b> Read indicator detail</div>
+    </div>
+  </div>
+  <div id="ct-body"></div>
+</div>
+
+<!-- TAB 3: BY INCOME (national only) -->
+<div id="s-inc" class="sec">
+  <div class="tab-intro">
+    <div class="intro-kicker">By Income</div>
+    <h2>Readiness differences across WPRO, LMIC, and HIC groups</h2>
+    <p>This tab compares national HAI surveillance indicators by income classification to show where readiness is shared across the region and where patterns diverge between country groups.</p>
+    <div class="intro-pill-grid">
+      <div class="intro-pill"><b>WPRO</b> Regional total</div>
+      <div class="intro-pill"><b>LMIC</b> Lower- and middle-income group</div>
+      <div class="intro-pill"><b>HIC</b> High-income group</div>
+      <div class="intro-pill"><b>N</b> National indicators</div>
+    </div>
+  </div>
+  <div class="src-band nat">By Income &mdash; National-level readiness only</div>
+  <div class="cd">
+    <div class="cd-t">Income Group Summary Table</div>
+    <div class="fig-sub">Percent of countries with reported readiness by income group. WPRO n=23, LMIC n=14, HIC n=9.</div>
+    <div class="note-box"><strong>Note:</strong> Income group classifications used in this analysis follow World Bank income group classifications.<br><strong>High Income Countries (HIC, n=9):</strong> Brunei Darussalam, Hong Kong SAR, Macao SAR, Cook Islands, Japan, Nauru, Palau, New Zealand, Australia.<br><strong>Low &amp; Middle Income Countries (LMIC, n=14):</strong> Cambodia, China, Indonesia, Lao PDR, Malaysia, Marshall Islands, Micronesia, Mongolia, Papua New Guinea, Philippines, Solomon Islands, Tonga, Vanuatu, Vietnam.</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <select class="dd-sel" id="incGroupSel" onchange="renderIncGroup()"></select>
+      <div id="incGroupCount" style="font-size:11px;color:var(--muted);font-weight:700"></div>
+    </div>
+    <div class="hm-wrap"><table class="tbl" id="incGroupTable"></table></div>
+  </div>
+</div>
+
+<!-- TAB 4: BY FACILITY LEVEL -->
+<div id="s-lvl" class="sec">
+  <div class="tab-intro fac">
+    <div class="intro-kicker">By level of care</div>
+    <h2>Facility readiness by tertiary and secondary care level</h2>
+    <p>This tab breaks facility results down by level of care for the selected facility table, showing raw n/N percentages by indicator and making care-level gaps easier to scan.</p>
+    <div class="intro-pill-grid">
+      <div class="intro-pill"><b>F</b> Facility table selector</div>
+      <div class="intro-pill"><b>WPRO</b> Regional facility total</div>
+      <div class="intro-pill"><b>T</b> Tertiary care</div>
+      <div class="intro-pill"><b>S</b> Secondary care</div>
+    </div>
+  </div>
+  <div class="src-band fac">By level of care &mdash; Facility-level results only</div>
+  <div class="cd">
+    <div class="cd-t">Number of Health Facilities Included</div>
+    <div class="hm-wrap"><table class="tbl facility-count-table" id="facilityCountSummary"></table></div>
+  </div>
+  <div class="cd">
+    <div class="cd-t">Level Summary Table</div>
+    <div class="fig-sub">Raw n/N (%) values from the selected workbook table.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <select id="levelTable" class="dd-sel" onchange="FAC.renderLevelTab()"></select>
+    </div>
+    <div class="hm-wrap"><table class="tbl" id="levelSummary"></table></div>
+  </div>
+</div>
+
+<div class="ft">HAI Surveillance Dashboard &middot; WHO WPRO 2026 &middot; 23 countries/areas &middot; Sources: HAI National Workbook Apr 2026 &middot; HAI Facility Results</div>
+</div><!-- /wrap -->
+
+<script>
+/* ── CHART.JS SETUP ── */
+if(window.ChartDataLabels)try{Chart.register(ChartDataLabels);}catch(e){}
+Chart.defaults.font.family='Roboto,"Noto Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+Chart.defaults.font.size=14;Chart.defaults.color='#5A6374';
+Chart.defaults.plugins.datalabels={display:false};
+
+/* ── SHARED UTILS ── */
+function wrapLabel(label,max=24){const words=label.trim().split(/\s+/);const lines=[];let line='';words.forEach(w=>{const next=line?`${line} ${w}`:w;if(next.length>max&&line){lines.push(line);line=w;}else line=next;});if(line)lines.push(line);return lines;}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function animateKpiNumbers(root=document,duration=3000){if(!root)return;root.querySelectorAll('.kp-v,.radar-metric-val').forEach(node=>{const ft=node.dataset.finalValue||node.textContent.trim();const m=ft.match(/-?[\d,]+(?:\.\d+)?/);if(!m)return;node.dataset.finalValue=ft;const raw=m[0];const target=parseFloat(raw.replace(/,/g,''));const decimals=raw.includes('.')?raw.split('.')[1].length:0;const prefix=ft.slice(0,m.index);const suffix=ft.slice(m.index+raw.length);const useComma=raw.includes(',');const started=performance.now();node.style.fontVariantNumeric='tabular-nums';function fmt(v){let o=v.toFixed(decimals);if(useComma)o=o.replace(/\B(?=(\d{3})+(?!\d))/g,',');return o;}function tick(now){const t=Math.min((now-started)/duration,1);const e=1-Math.pow(1-t,3);node.textContent=prefix+fmt(target*e)+suffix;if(t<1)requestAnimationFrame(tick);else node.textContent=ft;}requestAnimationFrame(tick);});}
+function pctBarNat(v,col){return `<div class="pct-bar"><div class="pct-trk"><div class="pct-fil" style="width:${v}%;background:${col}"></div></div><span style="font-size:11px;font-weight:700;color:${col};min-width:40px;text-align:right">${v.toFixed(1)}%</span></div>`;}
+function escHtml(s){return esc(s);}
+const SPIDER_LABEL_PLUGIN={id:'spiderAxisLabels',afterDraw(chart,args,opts){
+  const r=chart.scales&&chart.scales.r;if(!r)return;
+  const labels=(opts&&opts.labels)||chart.data.labels||[];
+  const count=labels.length;if(!count)return;
+  const ctx=chart.ctx,area={left:6,top:6,right:chart.width-6,bottom:chart.height-6},pad=(opts&&opts.padding)||24;
+  const edgePad=(opts&&opts.edgePadding)||12,verticalPad=(opts&&opts.verticalPadding)||12,gap=(opts&&opts.gap)||4;
+  const extraPadding=(opts&&opts.extraPadding)||{};
+  ctx.save();
+  ctx.font=`${(opts&&opts.weight)||400} ${(opts&&opts.size)||13}px ${Chart.defaults.font.family}`;
+  ctx.fillStyle=(opts&&opts.color)||'#111827';
+  ctx.textBaseline='middle';
+  const lineH=(opts&&opts.lineHeight)||15;
+  const items=labels.map((raw,i)=>{
+    const lines=Array.isArray(raw)?raw:String(raw).split('\n');
+    const angle=(Math.PI*2*i/count)-Math.PI/2;
+    const cos=Math.cos(angle),sin=Math.sin(angle);
+    const itemPad=pad+(extraPadding[i]||0);
+    const x=r.xCenter+Math.cos(angle)*(r.drawingArea+itemPad);
+    const y=r.yCenter+Math.sin(angle)*(r.drawingArea+itemPad);
+    const side=cos>.25?'right':cos<-.25?'left':'center';
+    const align=side==='right'?'left':side==='left'?'right':'center';
+    const maxW=Math.max(...lines.map(line=>ctx.measureText(line).width));
+    const h=(lines.length-1)*lineH+lineH;
+    const minCenter=area.top+verticalPad+h/2,maxCenter=area.bottom-verticalPad-h/2;
+    let tx=x,ty=Math.max(minCenter,Math.min(maxCenter,y));
+    if(side==='right')tx=Math.max(area.left+edgePad,Math.min(area.right-edgePad-maxW,x));
+    else if(side==='left')tx=Math.max(area.left+edgePad+maxW,Math.min(area.right-edgePad,x));
+    else tx=Math.max(area.left+edgePad+maxW/2,Math.min(area.right-edgePad-maxW/2,x));
+    return{lines,tx,ty,maxW,h,align,side};
+  });
+  ['left','right'].forEach(side=>{
+    const group=items.filter(item=>item.side===side).sort((a,b)=>a.ty-b.ty);
+    for(let i=1;i<group.length;i++){
+      const prev=group[i-1],cur=group[i];
+      const minTy=prev.ty+prev.h/2+gap+cur.h/2;
+      if(cur.ty<minTy)cur.ty=minTy;
+    }
+    if(group.length){
+      const overflow=group[group.length-1].ty+group[group.length-1].h/2-(area.bottom-verticalPad);
+      if(overflow>0)group.forEach(item=>item.ty-=overflow);
+      const under=area.top+verticalPad-(group[0].ty-group[0].h/2);
+      if(under>0)group.forEach(item=>item.ty+=under);
+    }
+  });
+  items.forEach(item=>{
+    ctx.textAlign=item.align;
+    const startY=item.ty-(item.lines.length-1)*lineH/2;
+    item.lines.forEach((line,j)=>ctx.fillText(line,item.tx,startY+j*lineH));
+  });
+  ctx.restore();
+}};
+const SPIDER_TICK_PLUGIN={id:'spiderScaleTicks',afterDraw(chart,args,opts){
+  const r=chart.scales&&chart.scales.r;if(!r)return;
+  const ctx=chart.ctx;
+  const step=(opts&&opts.step)||20,max=(opts&&opts.max)||100;
+  const angle=((opts&&opts.angleDeg)!=null?opts.angleDeg:-66)*Math.PI/180;
+  const labelOffset=(opts&&opts.labelOffset)!=null?opts.labelOffset:0;
+  const ox=-Math.sin(angle)*labelOffset,oy=Math.cos(angle)*labelOffset;
+  ctx.save();
+  ctx.font=`600 ${innerWidth<600?9:11}px ${Chart.defaults.font.family}`;
+  ctx.fillStyle=(opts&&opts.color)||'rgba(176,90,40,.38)';
+  ctx.textBaseline='middle';
+  ctx.textAlign='center';
+  if(!opts||opts.includeZero!==false){
+    ctx.fillText('0%',r.xCenter+ox,r.yCenter+oy);
+  }
+  for(let v=step;v<=max;v+=step){
+    const dist=typeof r.getDistanceFromCenterForValue==='function'?r.getDistanceFromCenterForValue(v):r.drawingArea*v/max;
+    const x=r.xCenter+Math.cos(angle)*dist+ox,y=r.yCenter+Math.sin(angle)*dist+oy;
+    ctx.fillText(v+'%',x,y);
+  }
+  ctx.restore();
+}};
+
+/* ── NATIONAL DATA ── */
+const CDATA=[{"name":"Philippines","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"N","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"DK","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":40,"s2_pct":0,"s3_pct":25,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":8},{"name":"Micronesia, Fed. Sts.","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"Y","2.5":"Full-time","2.6":"N","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"N"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"DK","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"N","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"N","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":43,"s3_pct":0,"s4_pct":56,"s5_pct":50,"s6_pct":75,"s7_pct":60,"s8_pct":0,"overall":45},{"name":"Cambodia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Part-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"2","2.3":"Y","2.4":"Y","2.5":"Part-time","2.6":"N","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"DK","3.4":"N/A","3.5":"N","3.6":"Y","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"N","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"Y","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"Y"},"s5":{"5.1":"N","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"N","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":80,"s2_pct":57,"s3_pct":60,"s4_pct":58,"s5_pct":25,"s6_pct":50,"s7_pct":50,"s8_pct":25,"overall":53},{"name":"Lao PDR","inc":"LMIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"N","5.3":"N","5.4":"Y"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":50,"s3_pct":0,"s4_pct":0,"s5_pct":50,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":20},{"name":"Papua New Guinea","inc":"LMIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"5.0%","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":40,"s2_pct":0,"s3_pct":25,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":8},{"name":"Vanuatu","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"N","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"DK","7.2":"DK","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":40,"s2_pct":0,"s3_pct":0,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":5},{"name":"Solomon Islands","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"N","1.5":"N","1.6":"Y"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":0,"s3_pct":0,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":8},{"name":"Vietnam","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"7","2.3":"Y","2.4":"Y","2.5":"Part-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"Y","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI technical multidisciplinar","3.5":"Y","3.6":"Y","3.9":"70.6%","3.10":"57.0%","3.7":"Y","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"Y"},"s1_pct":100,"s2_pct":86,"s3_pct":100,"s4_pct":100,"s5_pct":100,"s6_pct":75,"s7_pct":100,"s8_pct":100,"overall":96},{"name":"Marshall Islands","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Part-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"4","2.3":"Y","2.4":"Y","2.5":"Voluntary","2.6":"N","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"National IPC lead","3.5":"Y","3.6":"N","3.9":"0","3.10":"4.3%","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":62,"s3_pct":86,"s4_pct":92,"s5_pct":75,"s6_pct":75,"s7_pct":83,"s8_pct":80,"overall":83},{"name":"Tonga","inc":"LMIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"DK","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"DK","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"Y","4.8a":"Manual","4.8b":"Manual","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":71,"s3_pct":50,"s4_pct":25,"s5_pct":50,"s6_pct":75,"s7_pct":67,"s8_pct":0,"overall":50},{"name":"Malaysia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"17","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"1","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Excel sheet","4.8b":"Excel sheet","4.9":"Y","4.10":"N","4.11":"Y","4.12":"Y","4.13a":"Manual","4.13b":"Manual","4.14":"N","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"Y"},"s1_pct":100,"s2_pct":71,"s3_pct":50,"s4_pct":85,"s5_pct":100,"s6_pct":100,"s7_pct":100,"s8_pct":100,"overall":88},{"name":"China","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"40","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Fully integrated","2.9a":"AMR Surveillance ;Emergency/IH","2.9b":"N/A","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI technical multidisciplinar","3.5":"Y","3.6":"Y","3.9":"1","3.10":"DK","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"Y"},"s1_pct":100,"s2_pct":100,"s3_pct":100,"s4_pct":100,"s5_pct":100,"s6_pct":100,"s7_pct":100,"s8_pct":100,"overall":100},{"name":"Indonesia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"14","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Partially integrated","2.9a":"N/A","2.9b":"AMR Surveillance","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"National IPC lead","3.5":"Y","3.6":"Y","3.9":"DK","3.10":"DK","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"Y"},"s5":{"5.1":"N","5.2":"N","5.3":"Y","5.4":"Y"},"s6":{"6.1":"N","6.2":"N","6.3":"Y","6.4":"Y"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":100,"s3_pct":100,"s4_pct":75,"s5_pct":50,"s6_pct":50,"s7_pct":60,"s8_pct":40,"overall":76},{"name":"Mongolia","inc":"LMIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"50","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"N","2.8":"Partially integrated","2.9a":"Emergency/IHR ;EWAR system","2.9b":"N/A","2.10":"Y","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"MoH, NCCD and National Inspect","3.5":"Y","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"Y","3.8":"N/A"},"s4":{"4.1":"DK","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Google sheet based","4.8b":"Google sheet based","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"Y","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":80,"s2_pct":71,"s3_pct":83,"s4_pct":67,"s5_pct":50,"s6_pct":75,"s7_pct":0,"s8_pct":25,"overall":60},{"name":"Palau","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"15","2.3":"N","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":80,"s2_pct":57,"s3_pct":25,"s4_pct":12,"s5_pct":50,"s6_pct":50,"s7_pct":20,"s8_pct":60,"overall":43},{"name":"Brunei Darussalam","inc":"HIC","s1":{"1.1":"N","1.2":"N","1.3":"N/A","1.4":"N/A","1.5":"N","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":0,"s2_pct":0,"s3_pct":0,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":0},{"name":"Macao SAR, China","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"N/A","1.4":"N/A","1.5":"Y","1.6":"Y"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Fully integrated","2.9a":"AMR Surveillance","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"DK","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"N","4.4":"Y","4.5":"Y","4.6":"N","4.7":"Y","4.8a":"Manual","4.8b":"Manual","4.9":"N","4.10":"Y","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"N","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"Y","8.2":"N","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":33,"s3_pct":50,"s4_pct":50,"s5_pct":25,"s6_pct":50,"s7_pct":40,"s8_pct":60,"overall":50},{"name":"Hong Kong SAR, China","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"20","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Fully integrated","2.9a":"AMR Surveillance","2.9b":"N/A","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI technical multidisciplinar","3.5":"Y","3.6":"Y","3.9":"1","3.10":"1","3.7":"Y","3.8":"Y"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Manual","4.13b":"Manual","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"Y","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":100,"s3_pct":100,"s4_pct":100,"s5_pct":75,"s6_pct":75,"s7_pct":83,"s8_pct":80,"overall":92},{"name":"Japan","inc":"HIC","s1":{"1.1":"N","1.2":"N","1.3":"N/A","1.4":"N/A","1.5":"N","1.6":"N"},"s2":{"2.1":"Y","2.2":"25","2.3":"N","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Partially integrated","2.9a":"AMR Surveillance","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"80.3%","3.10":"37.4%","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"Y","4.2":"Y","4.3":"N","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Electronic","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"Y","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"N","6.4":"Y"},"s7":{"7.1":"Y","7.2":"N","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"Y"},"s8":{"8.1":"Y","8.2":"Y","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":0,"s2_pct":43,"s3_pct":25,"s4_pct":92,"s5_pct":100,"s6_pct":75,"s7_pct":83,"s8_pct":50,"overall":65},{"name":"Cook Islands","inc":"HIC","s1":{"1.1":"N","1.2":"Y","1.3":"Part-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"N","2.2":"N/A","2.3":"N/A","2.4":"N","2.5":"N/A","2.6":"N/A","2.7":"N","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"Y","3.2":"Y","3.3":"Y","3.4":"HAI Surveilances captured in t","3.5":"N","3.6":"N","3.9":"N/A","3.10":"N/A","3.7":"Y","3.8":"N/A"},"s4":{"4.1":"N","4.2":"N","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"N","4.8a":"N/A","4.8b":"N/A","4.9":"N","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"N","5.2":"N","5.3":"N","5.4":"N"},"s6":{"6.1":"N","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":0,"s3_pct":67,"s4_pct":0,"s5_pct":0,"s6_pct":0,"s7_pct":0,"s8_pct":0,"overall":17},{"name":"New Zealand","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"12","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"Y","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"Y","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"Y","3.3":"N","3.4":"N/A","3.5":"Y","3.6":"Y","3.9":"DK","3.10":"DK","3.7":"N","3.8":"N"},"s4":{"4.1":"Y","4.2":"Y","4.3":"Y","4.4":"Y","4.5":"Y","4.6":"Y","4.7":"Y","4.8a":"Manual","4.8b":"Electronic","4.9":"Y","4.10":"Y","4.11":"Y","4.12":"Y","4.13a":"Electronic","4.13b":"Electronic","4.14":"Y","4.15":"Y"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"Y","6.3":"Y","6.4":"N"},"s7":{"7.1":"Y","7.2":"Y","7.3":"Y","7.4":"Y","7.5":"Y","7.6":"N"},"s8":{"8.1":"Y","8.2":"Y","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":100,"s2_pct":100,"s3_pct":57,"s4_pct":100,"s5_pct":75,"s6_pct":75,"s7_pct":83,"s8_pct":50,"overall":84},{"name":"Australia","inc":"HIC","s1":{"1.1":"Y","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"Y"},"s2":{"2.1":"Y","2.2":"18","2.3":"Y","2.4":"Y","2.5":"Part-time","2.6":"N","2.7":"Y","2.8":"Not integrated","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"Y","2.12":"Y"},"s3":{"3.1":"Y","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"1","3.10":"1","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"Y","4.3":"Y","4.4":"N","4.5":"N","4.6":"N","4.7":"Y","4.8a":"Manual","4.8b":"N/A","4.9":"Y","4.10":"N","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"N","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"N","6.3":"N","6.4":"N"},"s7":{"7.1":"N","7.2":"N","7.3":"N","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"Y","8.4":"Y","8.5":"N"},"s1_pct":100,"s2_pct":75,"s3_pct":50,"s4_pct":33,"s5_pct":50,"s6_pct":25,"s7_pct":0,"s8_pct":40,"overall":47},{"name":"Nauru","inc":"HIC","s1":{"1.1":"N","1.2":"Y","1.3":"Full-time","1.4":"Y","1.5":"Y","1.6":"N"},"s2":{"2.1":"Y","2.2":"3","2.3":"Y","2.4":"Y","2.5":"Full-time","2.6":"N","2.7":"N","2.8":"Don't know","2.9a":"N/A","2.9b":"N/A","2.10":"N","2.11":"N","2.12":"N/A"},"s3":{"3.1":"N","3.2":"N","3.3":"N/A","3.4":"N/A","3.5":"Y","3.6":"N","3.9":"0","3.10":"1","3.7":"N/A","3.8":"N/A"},"s4":{"4.1":"N","4.2":"DK","4.3":"N/A","4.4":"N/A","4.5":"N/A","4.6":"N/A","4.7":"DK","4.8a":"N/A","4.8b":"N/A","4.9":"Y","4.10":"Y","4.11":"N","4.12":"N","4.13a":"N/A","4.13b":"N/A","4.14":"N/A","4.15":"N"},"s5":{"5.1":"Y","5.2":"Y","5.3":"N","5.4":"Y"},"s6":{"6.1":"Y","6.2":"N","6.3":"Y","6.4":"N"},"s7":{"7.1":"DK","7.2":"DK","7.3":"Y","7.4":"N","7.5":"N/A","7.6":"N"},"s8":{"8.1":"N","8.2":"N","8.3":"N","8.4":"N/A","8.5":"N"},"s1_pct":60,"s2_pct":43,"s3_pct":25,"s4_pct":25,"s5_pct":75,"s6_pct":50,"s7_pct":20,"s8_pct":0,"overall":37}];
+const CAP_RAW={"Philippines":[0,0,50,0,0,0,0,0],"Micronesia, Fed. Sts.":[0,100,100,100,100,100,100,0],"Cambodia":[100,100,0,0,0,100,100,100],"Lao PDR":[0,0,0,0,100,0,0,0],"Papua New Guinea":[0,0,0,0,0,0,0,0],"Vanuatu":[0,0,0,0,0,0,50,0],"Solomon Islands":[0,0,0,0,0,0,0,0],"Vietnam":[100,100,100,100,100,100,100,100],"Marshall Islands":[100,100,100,100,100,100,100,100],"Tonga":[100,50,100,0,0,100,100,0],"Malaysia":[100,100,100,0,100,100,100,100],"China":[100,100,100,100,100,100,100,100],"Indonesia":[100,100,100,0,0,0,100,0],"Mongolia":[100,50,100,0,100,100,0,0],"Palau":[0,0,0,0,100,100,100,0],"Brunei Darussalam":[0,0,0,0,0,0,0,0],"Macao SAR, China":[100,100,100,100,100,100,100,100],"Hong Kong SAR, China":[100,100,100,100,100,100,100,100],"Japan":[0,100,100,100,100,100,100,100],"Cook Islands":[100,0,0,0,0,0,0,0],"New Zealand":[100,100,100,100,100,100,100,100],"Australia":[100,0,100,0,100,100,0,0],"Nauru":[0,0,50,100,100,100,50,0]};
+const CAP_PILLARS=['Readiness to develop HAI surveillance national strategic plan','Readiness to develop standardized protocols for HAI surveillance data collection','Readiness to integrate HAI surveillance data reported from HCFs into a centralized national database','Readiness to check the quality of HAI surveillance data reported by HCFs','Readiness to analyse HAI surveillance data reported by HCFs','Readiness to interpret HAI surveillance data','Readiness to communicate/provide feedback on/report on HAI surveillance data','Readiness to conduct M&E of HAI surveillance'];
+const CAP_PILLARS_SHORT=['Strategic Plan','Data Collection','HCF Integration','Data QA','Data Analysis','Interpretation','Communication','M&E'];
+const CAP_REG=[56.5,47.8,56.5,39.1,60.9,65.2,56.5,39.1];
+const NAT_READY={
+  labels:['N1: National IPC Programme','N2: National HAI Surveillance Governance','N3: National Strategic Planning','N4: National Data Collection','N5: National Data Analysis','N6: National Interpretation','N7: National Communication & Feedback','N8: National Monitoring & Evaluation'],
+  shortLabels:['N1: National IPC Programme','N2: National HAI Surveillance Governance','N3: National Strategic Planning','N4: National Data Collection','N5: National Data Analysis','N6: National Interpretation','N7: National Communication & Feedback','N8: National Monitoring & Evaluation'],
+  wpro:[70.3,44.8,34.8,43.8,47.8,46.7,39.9,33.9],
+  countries:{
+    "Philippines":[50,0,10,0,0,0,0,0],
+    "Micronesia, Fed. Sts.":[66.7,40,0,38.5,50,75,50,0],
+    "Cambodia":[66.7,40,30,53.8,25,50,50,20],
+    "Lao PDR":[66.7,40,0,0,50,0,0,0],
+    "Papua New Guinea":[50,0,20,0,0,0,0,0],
+    "Vanuatu":[50,0,0,0,0,0,0,0],
+    "Solomon Islands":[66.7,0,0,0,0,0,0,0],
+    "Vietnam":[100,60,90,100,100,75,100,100],
+    "Marshall Islands":[83.3,50,60,92.3,75,75,83.3,80],
+    "Tonga":[66.7,60,20,15.4,50,75,66.7,0],
+    "Malaysia":[100,60,40,84.6,100,100,100,100],
+    "China":[100,100,90,100,100,100,100,100],
+    "Indonesia":[100,100,70,69.2,50,50,50,40],
+    "Mongolia":[83.3,70,50,61.5,50,75,0,20],
+    "Palau":[83.3,50,20,7.7,50,50,16.7,60],
+    "Brunei Darussalam":[0,0,0,0,0,0,0,0],
+    "Macao SAR, China":[66.7,30,30,46.2,25,50,33.3,60],
+    "Hong Kong SAR, China":[100,100,100,100,75,75,83.3,80],
+    "Japan":[0,40,30,92.3,100,75,83.3,40],
+    "Cook Islands":[50,0,40,0,0,0,0,0],
+    "New Zealand":[100,90,40,100,75,75,83.3,40],
+    "Australia":[100,60,40,30.8,50,25,0,40],
+    "Nauru":[66.7,40,20,15.4,75,50,16.7,0]
+  }
+};
+const CAP_HIC=[55.6,44.4,55.6,55.6,77.8,77.8,55.6,44.4];
+const CAP_LMIC=[57.1,50.0,57.1,28.6,50.0,57.1,57.1,35.7];
+const KEY_INDS=[{"code":"1.1","tot":69.6,"lmic":78.6,"hic":55.6},{"code":"1.2","tot":91.3,"lmic":100.0,"hic":77.8},{"code":"1.3","tot":85.0,"lmic":85.7,"hic":83.3},{"code":"1.4","tot":85.0,"lmic":78.6,"hic":100.0},{"code":"1.5","tot":69.6,"lmic":64.3,"hic":77.8},{"code":"1.6","tot":43.5,"lmic":42.9,"hic":44.4},{"code":"2.1","tot":60.9,"lmic":57.1,"hic":66.7},{"code":"2.3","tot":85.7,"lmic":100.0,"hic":66.7},{"code":"2.4","tot":65.2,"lmic":71.4,"hic":55.6},{"code":"2.5","tot":73.3,"lmic":70.0,"hic":80.0},{"code":"2.6","tot":66.7,"lmic":70.0,"hic":60.0},{"code":"2.7","tot":52.2,"lmic":57.1,"hic":44.4},{"code":"2.8","tot":26.1,"lmic":21.4,"hic":33.3},{"code":"2.10","tot":26.1,"lmic":28.6,"hic":22.2},{"code":"2.11","tot":39.1,"lmic":28.6,"hic":55.6},{"code":"2.12","tot":88.9,"lmic":75.0,"hic":100.0},{"code":"3.1","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"3.2","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"3.3","tot":77.8,"lmic":83.3,"hic":66.7},{"code":"3.5","tot":69.6,"lmic":64.3,"hic":77.8},{"code":"3.6","tot":26.1,"lmic":28.6,"hic":22.2},{"code":"3.7","tot":87.5,"lmic":100.0,"hic":66.7},{"code":"3.8","tot":80.0,"lmic":100.0,"hic":50.0},{"code":"4.1","tot":47.8,"lmic":50.0,"hic":44.4},{"code":"4.2","tot":52.2,"lmic":50.0,"hic":55.6},{"code":"4.3","tot":83.3,"lmic":100.0,"hic":60.0},{"code":"4.4","tot":91.7,"lmic":100.0,"hic":80.0},{"code":"4.5","tot":91.7,"lmic":100.0,"hic":80.0},{"code":"4.6","tot":75.0,"lmic":85.7,"hic":60.0},{"code":"4.7","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"4.9","tot":60.9,"lmic":57.1,"hic":66.7},{"code":"4.10","tot":39.1,"lmic":28.6,"hic":55.6},{"code":"4.11","tot":34.8,"lmic":35.7,"hic":33.3},{"code":"4.12","tot":34.8,"lmic":35.7,"hic":33.3},{"code":"4.14","tot":75.0,"lmic":60.0,"hic":100.0},{"code":"4.15","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"5.1","tot":60.9,"lmic":50.0,"hic":77.8},{"code":"5.2","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"5.3","tot":21.7,"lmic":28.6,"hic":11.1},{"code":"5.4","tot":52.2,"lmic":50.0,"hic":55.6},{"code":"6.1","tot":65.2,"lmic":57.1,"hic":77.8},{"code":"6.2","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"6.3","tot":60.9,"lmic":64.3,"hic":55.6},{"code":"6.4","tot":21.7,"lmic":28.6,"hic":11.1},{"code":"7.1","tot":56.5,"lmic":57.1,"hic":55.6},{"code":"7.2","tot":34.8,"lmic":42.9,"hic":22.2},{"code":"7.3","tot":52.2,"lmic":50.0,"hic":55.6},{"code":"7.4","tot":39.1,"lmic":42.9,"hic":33.3},{"code":"7.5","tot":100.0,"lmic":100.0,"hic":100.0},{"code":"7.6","tot":17.4,"lmic":21.4,"hic":11.1},{"code":"8.1","tot":39.1,"lmic":35.7,"hic":44.4},{"code":"8.2","tot":39.1,"lmic":35.7,"hic":44.4},{"code":"8.3","tot":39.1,"lmic":35.7,"hic":44.4},{"code":"8.4","tot":100.0,"lmic":100.0,"hic":100.0},{"code":"8.5","tot":13.0,"lmic":21.4,"hic":0.0}];
+const IND_META={'1.1':{g:'IPC Programme',l:'Active national IPC programme'},'1.2':{g:'IPC Programme',l:'Appointed national IPC lead/focal point'},'1.3':{g:'IPC Programme',l:'IPC lead working full-time'},'1.4':{g:'IPC Programme',l:'Additional IPC technical support staff'},'1.5':{g:'IPC Programme',l:'National IPC committee exists'},'1.6':{g:'IPC Programme',l:'Dedicated IPC budget'},'2.1':{g:'HAI Governance',l:'Active national HAI surveillance programme'},'2.2':{g:'HAI Governance',l:'Years HAI surveillance in operation'},'2.3':{g:'HAI Governance',l:'HAI surveillance part of national IPC programme'},'2.4':{g:'HAI Governance',l:'National HAI surveillance lead designated'},'2.5':{g:'HAI Governance',l:'HAI surveillance lead working full-time'},'2.6':{g:'HAI Governance',l:'HAI surveillance lead received training'},'2.7':{g:'HAI Governance',l:'Technical multidisciplinary HAI group'},'2.8':{g:'HAI Governance',l:'HAI surveillance integrated with other programmes'},'2.9':{g:'HAI Governance',l:'Integrated surveillance programme / details'},'2.10':{g:'HAI Governance',l:'Laws/regulations mandating HAI surveillance'},'2.11':{g:'HAI Governance',l:'Financial resources for HAI surveillance'},'2.12':{g:'HAI Governance',l:'HAI surveillance funding is regular'},'3.1':{g:'Strategic Planning',l:'Readiness to develop HAI surveillance strategic plan'},'3.2':{g:'Strategic Planning',l:'National HAI surveillance strategic plan exists'},'3.3':{g:'Strategic Planning',l:'Strategic plan includes AMR/outbreak pathogens'},'3.4':{g:'Strategic Planning',l:'Who developed the strategic plan'},'3.5':{g:'Strategic Planning',l:'HCFs conducting HAI surveillance'},'3.6':{g:'Strategic Planning',l:'Multidisciplinary group and strategic plan established'},'3.7':{g:'Strategic Planning',l:'National Strategic Plan for HAI and related AMR surveillance developed'},'3.8':{g:'Strategic Planning',l:'National/subnational HAI and related AMR surveillance system established'},'3.9':{g:'Strategic Planning',l:'% tertiary HCFs implementing HAI surveillance'},'3.10':{g:'Strategic Planning',l:'% secondary HCFs implementing HAI surveillance'},'4.1':{g:'Data Collection',l:'Readiness to develop standardized data collection protocols'},'4.2':{g:'Data Collection',l:'Written standardized HAI data collection protocol'},'4.3':{g:'Data Collection',l:'Protocol distributed to all HCFs'},'4.4':{g:'Data Collection',l:'Protocol includes standardized data collection questionnaires'},'4.5':{g:'Data Collection',l:'Protocol includes sources of data collection at HCF level'},'4.6':{g:'Data Collection',l:'Protocol specifies HCF reporting mechanism'},'4.7':{g:'Data Collection',l:'Mechanism for HCF to report data to national level'},'4.8a':{g:'Data Collection',l:'HCF reporting method: Manual'},'4.8b':{g:'Data Collection',l:'HCF reporting method: Electronic'},'4.9':{g:'Data Collection',l:'HCFs currently reporting data to national level'},'4.10':{g:'Data Collection',l:'Readiness to check quality of HAI surveillance data'},'4.11':{g:'Data Collection',l:'Checking quality of HAI data reported by HCFs'},'4.12':{g:'Data Collection',l:'Integrating all HAI surveillance data from HCFs'},'4.13a':{g:'Data Collection',l:'Data integration method: Manual'},'4.13b':{g:'Data Collection',l:'Data integration method: Electronic'},'4.14':{g:'Data Collection',l:'Centralized database including HAI surveillance data'},'4.15':{g:'Data Collection',l:'Providing training to HCFs on HAI surveillance data collection'},'5.1':{g:'Data Analysis',l:'Readiness to analyze HAI surveillance data'},'5.2':{g:'Data Analysis',l:'Receiving and analyzing HAI surveillance data'},'5.3':{g:'Data Analysis',l:'Providing training to HCFs on data analysis methods'},'5.4':{g:'Data Analysis',l:'National HAI indicators identified'},'6.1':{g:'Interpretation',l:'Readiness to interpret HAI surveillance data'},'6.2':{g:'Interpretation',l:'Interpreting national HAI surveillance data'},'6.3':{g:'Interpretation',l:'Utilizing HAI data to advise HCFs on IPC improvements'},'6.4':{g:'Interpretation',l:'Providing training to HCFs on HAI data interpretation'},'7.1':{g:'Communication',l:'Readiness to communicate/feedback HAI surveillance data'},'7.2':{g:'Communication',l:'National HAI surveillance communication plan exists'},'7.3':{g:'Communication',l:'National and facility stakeholders identified'},'7.4':{g:'Communication',l:'Developing national HAI surveillance reports'},'7.5':{g:'Communication',l:'Providing feedback to HCFs on HAI surveillance findings'},'7.6':{g:'Communication',l:'Providing training to HCFs on communication/feedback'},'8.1':{g:'M&E',l:'Readiness to conduct M&E of HAI surveillance'},'8.2':{g:'M&E',l:'Implementing monitoring of HAI surveillance system'},'8.3':{g:'M&E',l:'Evaluation conducted in past 3-5 years'},'8.4':{g:'M&E',l:'Utilizing HAI surveillance findings for future planning'},'8.5':{g:'M&E',l:'Providing training to HCFs on M&E'}};
+const SECTION_META=[{id:'s1',title:'National IPC Programme',color:'#1A5FA8',keys:['1.1','1.2','1.3','1.4','1.5','1.6']},{id:'s2',title:'National HAI Surveillance Governance',color:'#0F7A5A',keys:['2.1','2.2','2.3','2.4','2.5','2.6','2.7','2.8','2.9a','2.9b','2.10','2.11','2.12']},{id:'s3',title:'National Strategic Planning',color:'#7B5EA7',keys:['3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8','3.9','3.10']},{id:'s4',title:'National Data Collection',color:'#2E8B57',keys:['4.1','4.2','4.3','4.4','4.5','4.6','4.7','4.8a','4.8b','4.9','4.10','4.11','4.12','4.13a','4.13b','4.14','4.15']},{id:'s5',title:'National Data Analysis',color:'#D85A1A',keys:['5.1','5.2','5.3','5.4']},{id:'s6',title:'National Interpretation',color:'#1B7A9E',keys:['6.1','6.2','6.3','6.4']},{id:'s7',title:'National Communication & Feedback',color:'#C0392B',keys:['7.1','7.2','7.3','7.4','7.5','7.6']},{id:'s8',title:'National Monitoring & Evaluation',color:'#5D5D5D',keys:['8.1','8.2','8.3','8.4','8.5']}];
+/* ── NATIONAL OVERVIEW INIT ── */
+function initNatOverview(){
+  const natOverviewLabels=NAT_READY.shortLabels.map(l=>wrapLabel(l,20));
+  const natRanked=NAT_READY.wpro.map((v,i)=>({v,label:NAT_READY.shortLabels[i]})).sort((a,b)=>b.v-a.v);
+  const natMean=NAT_READY.wpro.reduce((a,b)=>a+b,0)/NAT_READY.wpro.length;
+  const natMetrics=document.getElementById('nat-radarMetrics');
+  if(natMetrics)natMetrics.innerHTML=`
+    <div class="radar-metric"><div class="radar-metric-lbl">Highest</div><div class="radar-metric-val green">${natRanked[0].v.toFixed(1)}%</div><div class="radar-metric-sub">${esc(natRanked[0].label)}</div></div>
+    <div class="radar-metric"><div class="radar-metric-lbl">Lowest</div><div class="radar-metric-val red">${natRanked[natRanked.length-1].v.toFixed(1)}%</div><div class="radar-metric-sub">${esc(natRanked[natRanked.length-1].label)}</div></div>
+    <div class="radar-metric"><div class="radar-metric-lbl">Average</div><div class="radar-metric-val">${natMean.toFixed(1)}%</div><div class="radar-metric-sub">N1-N8</div></div>`;
+  new Chart(document.getElementById('nat-c1'),{type:'radar',data:{labels:natOverviewLabels,datasets:[{label:'WPRO Regional',data:NAT_READY.wpro,backgroundColor:'rgba(47,125,77,.13)',borderColor:'#2F7D4D',borderWidth:2.5,pointBackgroundColor:'#2F7D4D',pointBorderColor:'#fff',pointBorderWidth:1.5,pointRadius:3.5,pointHoverRadius:7,pointHitRadius:14}]},options:{maintainAspectRatio:false,animation:{duration:1400,easing:'easeOutQuart'},animations:{radius:{duration:900,easing:'easeOutBack',from:0}},layout:{padding:{top:innerWidth<600?52:84,bottom:innerWidth<600?32:56,left:innerWidth<600?34:126,right:innerWidth<600?34:126}},plugins:{legend:{display:false},tooltip:{callbacks:{title:items=>NAT_READY.labels[items[0].dataIndex],label:ctx=>`${ctx.parsed.r.toFixed(1)}% regional readiness`}},datalabels:{display:true,color:'#111827',font:{size:innerWidth<600?9:12,weight:'600'},formatter:v=>v.toFixed(1)+'%',anchor:'end',align:'end',offset:innerWidth<600?2:4,clip:false},spiderAxisLabels:{size:innerWidth<600?8:innerWidth<900?10:11,padding:innerWidth<600?18:34,lineHeight:innerWidth<600?11:14,weight:400,color:'#334155',edgePadding:10,verticalPadding:12},spiderScaleTicks:{step:20,max:100,angleDeg:-66}},scales:{r:{beginAtZero:true,max:100,ticks:{display:false,stepSize:20},grid:{circular:false,color:ctx=>ctx.index===5?'rgba(169,75,29,.26)':'rgba(216,90,26,.16)',lineWidth:ctx=>ctx.index===5?1.15:1},angleLines:{color:'rgba(169,75,29,.18)',lineWidth:1},pointLabels:{display:false}}}},plugins:[SPIDER_LABEL_PLUGIN,SPIDER_TICK_PLUGIN]});
+  (function(){
+    const tbl=document.getElementById('nat-hmTbl');
+    const colFor=v=>v==null?'var(--sf2)':v>=75?'#0F7A5A':v>=50?'#C99000':v>=25?'#B45309':'#C0392B';
+    const txFor=v=>v==null?'var(--subtle)':v>=50?'#fff':'#fff';
+    const fmtPct=v=>v==null?'N/A':Number(v).toFixed(1)+'%';
+    const codeFor=i=>'N'+(i+1);
+    const natNote=document.getElementById('nat-hmCodeNote');
+    if(natNote)natNote.innerHTML=NAT_READY.shortLabels.map(label=>`<span>${esc(label)}</span>`).join('');
+    let h='<thead><tr><th>Country / Area</th>';
+    NAT_READY.labels.forEach((p,i)=>h+=`<th title="${esc(p)}">${esc(codeFor(i))}</th>`);
+    h+='</tr></thead><tbody>';
+    CDATA.slice().sort((a,b)=>ctDisp(a.name).localeCompare(ctDisp(b.name))).forEach((c,i)=>{
+      const cap=NAT_READY.countries[c.name]||Array(8).fill(null);
+      h+=`<tr><td><span style="color:var(--muted);font-weight:700">${i+1}.</span> ${esc(ctDisp(c.name))}</td>`;
+      cap.forEach((v,idx)=>h+=`<td title="${esc(NAT_READY.labels[idx]+': '+fmtPct(v))}" style="background:${colFor(v)};color:${txFor(v)}">${fmtPct(v)}</td>`);
+      h+='</tr>';
+    });
+    h+='<tr class="wpro-r"><td>WPRO Regional</td>';
+    NAT_READY.wpro.forEach(v=>h+=`<td>${v.toFixed(1)}%</td>`);
+    h+='</tr></tbody>';
+    tbl.innerHTML=h;
+  })();
+}
+
+/* ── NATIONAL BY INCOME ── */
+function initInc(){
+  const sel=document.getElementById('incGroupSel');
+  const groups=getIncGroups();
+  sel.innerHTML=groups.map(g=>`<option value="${g.key}">${g.title} (${g.range})</option>`).join('');
+  renderIncGroup();
+}
+function getIncGroups(){
+  const byGroup={};
+  const cmpCode=(a,b)=>{const pa=String(a).match(/\d+|[a-z]+/gi)||[];const pb=String(b).match(/\d+|[a-z]+/gi)||[];for(let i=0;i<Math.max(pa.length,pb.length);i++){if(pa[i]===undefined)return-1;if(pb[i]===undefined)return 1;const na=Number(pa[i]),nb=Number(pb[i]);const diff=Number.isFinite(na)&&Number.isFinite(nb)?na-nb:String(pa[i]).localeCompare(String(pb[i]));if(diff)return diff;}return 0;};
+  KEY_INDS.forEach(i=>{const meta=IND_META[i.code]||{g:'Other',l:i.code};(byGroup[meta.g]=byGroup[meta.g]||[]).push(i);});
+  return Object.entries(byGroup).map(([title,items])=>{
+    const allCodes=Object.keys(IND_META).filter(c=>IND_META[c].g===title).sort(cmpCode);
+    const numericCodes=items.map(i=>i.code);
+    return{key:title,title,items:items.sort((a,b)=>cmpCode(a.code,b.code)),allCodes,numericCodes,range:allCodes.length?`${allCodes[0]}-${allCodes[allCodes.length-1]}`:`${numericCodes[0]}-${numericCodes[numericCodes.length-1]}`};
+  });
+}
+function renderIncGroup(){
+  const groups=getIncGroups();const sel=document.getElementById('incGroupSel');
+  const key=sel.value||groups[0].key;const group=groups.find(g=>g.key===key)||groups[0];
+  document.getElementById('incGroupCount').textContent=`${group.items.length} charted indicators · ${group.allCodes.length} total indicators`;
+  const itemByCode=Object.fromEntries(group.items.map(i=>[i.code,i]));
+  document.getElementById('incGroupTable').innerHTML=`<thead><tr><th>Code</th><th>Indicator</th><th>WPRO</th><th>LMIC</th><th>HIC</th></tr></thead><tbody>${group.allCodes.map(code=>{
+    const item=itemByCode[code];const meta=IND_META[code]||{l:code};
+    const cell=(v,col)=>item?pctBarNat(v,col):'<span class="muted-cell">Not charted</span>';
+    return `<tr><td><strong>${esc(code)}</strong></td><td>${esc(meta.l)}${item?'':'<div style="font-size:12px;color:var(--muted);line-height:18px">Categorical / not percentage-coded</div>'}</td><td>${cell(item?.tot,'#D85A1A')}</td><td>${cell(item?.lmic,'#1A5FA8')}</td><td>${cell(item?.hic,'#0F7A5A')}</td></tr>`;
+  }).join('')}</tbody>`;
+}
+/* ── FACILITY NAMESPACE ── */
+const FAC=(function(){
+  const D=window.__HAI_FACILITY_DATA__;
+  const el=id=>document.getElementById(id);
+  const charts={radar:null,ctRadar:null,ctBar:null};
+  function fmt(v){return v==null||Number.isNaN(Number(v))?'N/A':Number(v).toFixed(1)+'%'}
+  function raw(e){return e&&e.raw?e.raw:'N/A'}
+  function nn(e){return e&&e.num!=null&&e.den!=null?`${e.num}/${e.den}`:'N/A'}
+  function avg(vals){const xs=vals.filter(v=>v!=null&&!Number.isNaN(v));return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null}
+  function pctColor(v){if(v==null)return '#ADB5BD';if(v>=75)return '#0F7A5A';if(v>=50)return '#D85A1A';if(v>=25)return '#64748B';return '#C0392B'}
+  function heatBg(v){if(v==null)return 'var(--sf2)';if(v<25)return 'rgba(192,57,43,.12)';if(v<50)return 'rgba(100,116,139,.12)';if(v<75)return 'rgba(116,196,154,.22)';return 'rgba(15,122,90,.12)'}
+  function heatTx(v){if(v==null)return 'var(--subtle)';if(v<25)return '#C0392B';if(v<50)return '#475569';if(v<75)return '#2E9E68';return '#0F7A5A'}
+  function band(v){if(v==null)return 'na';if(v>=75)return 'high';if(v>=50)return 'mid';if(v>=25)return 'low';return 'verylow'}
+  const BAND_COLORS={high:'#0F7A5A',mid:'#D85A1A',low:'#64748B',verylow:'#C0392B',na:'#CBD5E1'};
+  function shortTitle(t){return t.title.replace(/^Table\s*\d+\s*-\s*/i,'').replace(/\s+by levels of care$/i,'').replace(/\s+/g,' ').trim()}
+  function shortLabel(ind,i){const pillarNames=['Strategic plan readiness','Data collection protocol','Reporting mechanism','Data quality checks','Data analysis','Data interpretation','Communication / feedback','Monitoring and evaluation'];return ind.code.startsWith('10.')?pillarNames[i]:ind.label.replace(/\s+/g,' ').replace(/^Facilities\s+(with|which)\s+/i,'').replace(/^Facility-level\s+/i,'').trim()}
+  function excelLabel(ind){return ind.label.replace(/\s+/g,' ').trim()}
+  function facWrapLabel(label,max=24){const words=label.trim().split(/\s+/);const lines=[];let line='';words.forEach(w=>{const next=line?`${line} ${w}`:w;if(next.length>max&&line){lines.push(line);line=w;}else line=next;});if(line)lines.push(line);return lines;}
+  function table(no){return D&&D.tables.find(t=>t.table_no===Number(no))}
+  function entryForCountry(t,country,key){const row=t.countries.find(c=>c.country===country);return row&&row.values[key]?row.values[key]:null}
+  function valueForLevel(t,level,key){return t.levels&&t.levels[level]&&t.levels[level][key]?t.levels[level][key]:null}
+  function tableMeanForCountry(no,country){const t=table(no);return avg(t.indicators.map(ind=>entryForCountry(t,country,ind.key)?.pct))}
+  function pctBar(entry,color){const v=entry?.pct;const col=color||pctColor(v);return `<div class="pct-bar-fac"><div class="pct-trk-fac"><div class="pct-fil-fac" style="width:${v==null?0:Math.max(0,Math.min(100,v))}%;background:${col}"></div></div><div class="pct-txt">${fmt(v)}</div></div>`}
+  const capacityChartLabels=['Developing strategic plans','Developing data protocol','Reporting','Checking data quality','Analysis','Interpretation','Feedback','M&E'];
+  const FAC_PROFILE_TABLES=[1,2,3,5,6,7,8,9];
+  const FAC_PROFILE_CODES={1:'F1',2:'F2',3:'F3',5:'F4',6:'F5',7:'F6',8:'F7',9:'F8'};
+  function facProfileCode(no){return FAC_PROFILE_CODES[no]||`F${no}`}
+const FAC_PROFILE_LABELS={
+    1:'F1: Facility-level IPC Programmes',
+    2:'F2: Facility-level HAI Surveillance Governance',
+    3:'F3: Facility-level HAI Surveillance Strategic Planning',
+    5:'F4: Facility-level HAI Surveillance Data Collection',
+    6:'F5: Facility-level HAI Surveillance Data Analysis',
+    7:'F6: Facility-level HAI Surveillance Data Interpretation',
+    8:'F7: Facility-level HAI Surveillance Data Communication/Feedback',
+    9:'F8: Facility-level HAI Surveillance M&E'
+  };
+  const FAC_PROFILE_AXIS_LABELS={
+    1:FAC_PROFILE_LABELS[1],
+    2:FAC_PROFILE_LABELS[2],
+    3:FAC_PROFILE_LABELS[3],
+    5:FAC_PROFILE_LABELS[5],
+    6:FAC_PROFILE_LABELS[6],
+    7:FAC_PROFILE_LABELS[7],
+    8:FAC_PROFILE_LABELS[8],
+    9:FAC_PROFILE_LABELS[9]
+  };
+  function facilityReadinessSeries(level='wpro'){
+    return FAC_PROFILE_TABLES.map(no=>{
+      const t=table(no);if(!t)return null;
+      return avg(t.indicators.map(ind=>valueForLevel(t,level,ind.key)?.pct));
+    });
+  }
+
+  function renderKPIs(){
+    if(!D)return;
+    const t1=table(1),t2=table(2);
+    const total=D.meta.n_facilities;
+    const tertiary=Object.values(D.summary).reduce((s,c)=>s+c.tertiary,0);
+    const secondary=Object.values(D.summary).reduce((s,c)=>s+c.secondary,0);
+    const vn=D.summary.Vietnam?D.summary.Vietnam.total:0;
+    const facilityProfileMean=avg(facilityReadinessSeries('wpro'));
+    const kpiRoot=el('fac-kpi-facts');
+    if(kpiRoot){
+      const kpis=[
+        {c:'kg',l:'Facilities in source',v:total.toLocaleString(),s:`${tertiary} tertiary + ${secondary} secondary`},
+        {c:'kb',l:'Active IPC programme',v:fmt(valueForLevel(t1,'wpro',t1.indicators[0].key)?.pct),s:raw(valueForLevel(t1,'wpro',t1.indicators[0].key))},
+        {c:'ko',l:'Active HAI surveillance',v:fmt(valueForLevel(t2,'wpro',t2.indicators[0].key)?.pct),s:raw(valueForLevel(t2,'wpro',t2.indicators[0].key))},
+        {c:'kn',l:'Avg readiness, 8 domains',v:fmt(facilityProfileMean),s:'F1-F8'},
+        {c:'kr',l:'Vietnam share of sample',v:fmt(vn/total*100),s:`${vn.toLocaleString()} of ${total.toLocaleString()} facilities`}
+      ];
+      kpiRoot.innerHTML=kpis.map(k=>`<div class="kp ${k.c}"><div class="kp-l">${k.l}</div><div class="kp-v">${k.v}</div><div class="kp-s">${k.s}</div></div>`).join('');
+      animateKpiNumbers(kpiRoot,3000);
+    }
+    const hics=Object.values(D.summary).filter(s=>s.income==='HICs').length;
+    const lmics=Object.values(D.summary).filter(s=>s.income==='L&MICs').length;
+    const ml=el('metaLine');if(ml)ml.innerHTML=`${D.meta.n_countries} countries/areas &middot; ${D.meta.n_facilities.toLocaleString()} facilities &middot; ${hics} HICs + ${lmics} L&amp;MICs`;
+  }
+  function renderRadar(){
+    if(!D)return;
+    const wpro=facilityReadinessSeries('wpro');
+    const labels=FAC_PROFILE_TABLES.map(no=>facWrapLabel(FAC_PROFILE_AXIS_LABELS[no]||FAC_PROFILE_LABELS[no],18));
+    const ranked=FAC_PROFILE_TABLES.map((no,i)=>({no,label:FAC_PROFILE_LABELS[no],v:wpro[i]})).filter(d=>d.v!=null).sort((a,b)=>b.v-a.v);
+    const mean=avg(wpro);
+    el('fac-radarMetrics').innerHTML=`
+      <div class="radar-metric"><div class="radar-metric-lbl">Highest</div><div class="radar-metric-val green">${fmt(ranked[0]?.v)}</div><div class="radar-metric-sub">${esc(ranked[0]?.label||'')}</div></div>
+      <div class="radar-metric"><div class="radar-metric-lbl">Lowest</div><div class="radar-metric-val red">${fmt(ranked[ranked.length-1]?.v)}</div><div class="radar-metric-sub">${esc(ranked[ranked.length-1]?.label||'')}</div></div>
+      <div class="radar-metric"><div class="radar-metric-lbl">Average</div><div class="radar-metric-val">${fmt(mean)}</div><div class="radar-metric-sub">F1-F8</div></div>`;
+    animateKpiNumbers(el('fac-radarMetrics'),3000);
+    if(charts.radar){charts.radar.destroy();charts.radar=null;}
+    charts.radar=new Chart(el('fac-radarChart'),{type:'radar',data:{labels,datasets:[{label:'WPRO Regional',data:wpro,backgroundColor:'rgba(47,125,77,.13)',borderColor:'#2F7D4D',borderWidth:2.5,pointBackgroundColor:'#2F7D4D',pointBorderColor:'#fff',pointBorderWidth:1.5,pointRadius:3.5,pointHoverRadius:7,pointHitRadius:14}]},options:{maintainAspectRatio:false,animation:{duration:1400,easing:'easeOutQuart'},layout:{padding:{top:innerWidth<600?52:84,bottom:innerWidth<600?32:56,left:innerWidth<600?34:126,right:innerWidth<600?34:126}},plugins:{legend:{display:false},tooltip:{callbacks:{title:items=>FAC_PROFILE_LABELS[FAC_PROFILE_TABLES[items[0].dataIndex]],label:ctx=>`${ctx.parsed.r.toFixed(1)}% WPRO average`}},datalabels:{display:true,color:'#111827',font:{size:innerWidth<600?9:12,weight:'600'},formatter:v=>v.toFixed(1)+'%',anchor:'end',align:'end',offset:innerWidth<600?2:4,clip:false},spiderAxisLabels:{size:innerWidth<600?8:innerWidth<900?10:11,padding:innerWidth<600?18:34,lineHeight:innerWidth<600?11:14,weight:400,color:'#334155',edgePadding:10,verticalPadding:12,extraPadding:{4:innerWidth<600?8:14,6:innerWidth<600?8:14}},spiderScaleTicks:{step:20,max:100,angleDeg:-66}},scales:{r:{beginAtZero:true,max:100,ticks:{display:false,stepSize:20},grid:{circular:false,color:ctx=>ctx.index===5?'rgba(169,75,29,.26)':'rgba(216,90,26,.16)',lineWidth:ctx=>ctx.index===5?1.15:1},angleLines:{color:'rgba(169,75,29,.18)',lineWidth:1},pointLabels:{display:false}}}},plugins:[SPIDER_LABEL_PLUGIN,SPIDER_TICK_PLUGIN]});
+  }
+  function renderHeatmap(){
+    if(!D)return;
+    const rows=Object.keys(D.summary).sort((a,b)=>ctDisp(a).localeCompare(ctDisp(b)));
+    const colFor=v=>v==null?'var(--sf2)':v>=75?'#0F7A5A':v>=50?'#C99000':v>=25?'#B45309':'#C0392B';
+    const txFor=v=>v==null?'var(--subtle)':'#fff';
+    const facNote=el('fac-hmCodeNote');
+    if(facNote)facNote.innerHTML=FAC_PROFILE_TABLES.map(no=>`<span>${esc(FAC_PROFILE_LABELS[no])}</span>`).join('');
+    const headers=FAC_PROFILE_TABLES.map(no=>`<th title="${esc(FAC_PROFILE_LABELS[no])}">${esc(facProfileCode(no))}</th>`).join('');
+    const body=rows.map((country,i)=>{
+      return `<tr><td><span style="color:var(--muted);font-weight:700">${i+1}.</span> ${esc(ctDisp(country))}</td>${FAC_PROFILE_TABLES.map(no=>{const v=tableMeanForCountry(no,country);return `<td title="${esc(FAC_PROFILE_LABELS[no]+': '+fmt(v))}" style="background:${colFor(v)};color:${txFor(v)}">${fmt(v)}</td>`;}).join('')}</tr>`;
+    }).join('');
+    const wpro=facilityReadinessSeries('wpro');
+    const wproRow=`<tr class="wpro-r"><td>WPRO Regional</td>${FAC_PROFILE_TABLES.map((no,i)=>`<td title="${esc(FAC_PROFILE_LABELS[no]+': '+fmt(wpro[i]))}">${fmt(wpro[i])}</td>`).join('')}</tr>`;
+    el('fac-heatmapTbl').innerHTML=`<thead><tr><th>Country / Area</th>${headers}</tr></thead><tbody>${body}${wproRow}</tbody>`;
+  }
+  function renderLevelControls(){
+    if(!D)return;
+    const opts=D.tables.filter(t=>t.table_no!==10).map(t=>`<option value="${t.table_no}" ${t.table_no===1?'selected':''}>Table ${t.table_no} - ${esc(shortTitle(t))}</option>`).join('');
+    el('levelTable').innerHTML=opts;
+  }
+  function renderFacilityCountTable(){
+    if(!D||!el('facilityCountSummary'))return;
+    const groups=['HICs','L&MICs'];
+    const dispCountry=name=>(typeof ctDisp==='function'?ctDisp(name):name);
+    const fmtCount=v=>Number(v)?Number(v).toLocaleString():'';
+    const sumRows=rows=>rows.reduce((acc,[,s])=>({tertiary:acc.tertiary+(s.tertiary||0),secondary:acc.secondary+(s.secondary||0),total:acc.total+(s.total||0)}),{tertiary:0,secondary:0,total:0});
+    let body='';
+    groups.forEach(group=>{
+      const rows=Object.entries(D.summary).filter(([,s])=>s.income===group);
+      rows.forEach(([country,s])=>{
+        body+=`<tr><td>${esc(group)}</td><td>${esc(dispCountry(country))}</td><td>${fmtCount(s.tertiary)}</td><td>${fmtCount(s.secondary)}</td><td>${fmtCount(s.total)}</td></tr>`;
+      });
+      const sub=sumRows(rows);
+      body+=`<tr class="subtotal"><td>${esc(group)}</td><td>Sub-total (${esc(group)})</td><td>${fmtCount(sub.tertiary)}</td><td>${fmtCount(sub.secondary)}</td><td>${fmtCount(sub.total)}</td></tr>`;
+    });
+    const total=sumRows(Object.entries(D.summary));
+    el('facilityCountSummary').innerHTML=`<thead><tr><th>Income level</th><th>Countries</th><th>Tertiary level</th><th>Secondary level</th><th>Total</th></tr></thead><tbody>${body}<tr class="grand-total"><td>Total</td><td>Total</td><td>${fmtCount(total.tertiary)}</td><td>${fmtCount(total.secondary)}</td><td>${fmtCount(total.total)}</td></tr></tbody>`;
+  }
+  function renderLevelTab(){
+    if(!D)return;
+    renderFacilityCountTable();
+    const t=table(el('levelTable').value);
+    el('levelSummary').innerHTML=`<thead><tr><th>Code</th><th>Indicator</th><th>WPRO</th><th>Tertiary</th><th>Secondary</th></tr></thead><tbody>${t.indicators.map(ind=>{
+      const w=valueForLevel(t,'wpro',ind.key),te=valueForLevel(t,'tertiary',ind.key),se=valueForLevel(t,'secondary',ind.key);
+      return `<tr><td><strong>${ind.code}</strong></td><td>${esc(FAC_DETAIL_LABEL[ind.key]||ind.label)}</td><td>${pctBar(w,'#D85A1A')}</td><td>${pctBar(te,'#0F7A5A')}</td><td>${pctBar(se,'#009ADE')}</td></tr>`;
+    }).join('')}</tbody>`;
+  }
+  return{renderKPIs,renderRadar,renderHeatmap,renderLevelControls,renderLevelTab,renderFacilityCountTable,charts,D,table,entryForCountry,valueForLevel,tableMeanForCountry,avg,fmt,raw,nn,band,pctColor,heatBg,heatTx,shortTitle,excelLabel,facWrapLabel,pctBar,capacityChartLabels,BAND_COLORS,facilityReadinessSeries,facProfileCode};
+})();
+/* ── COMBINED BY COUNTRY ── */
+let CT_sel='',CT_grp='ALL';
+let CT_natBar=null,CT_facBar=null;
+let __worldData=(typeof window!=='undefined'&&window.__WORLD_TOPO__)||null;
+const CT_ISO={Vietnam:'vn',China:'cn',Japan:'jp','Republic of Korea':'kr','Korea, Rep.':'kr',Philippines:'ph',Cambodia:'kh','Lao PDR':'la',Mongolia:'mn',Australia:'au','New Zealand':'nz',Indonesia:'id',Malaysia:'my','Hong Kong SAR, China':'hk','Macao SAR, China':'mo','Brunei Darussalam':'bn','Papua New Guinea':'pg','Solomon Islands':'sb',Vanuatu:'vu',Fiji:'fj',Tonga:'to',Samoa:'ws',Nauru:'nr',Tuvalu:'tv',Palau:'pw','Marshall Islands':'mh','Micronesia, Fed. Sts.':'fm','Cook Islands':'ck'};
+const CT_MAP={'Lao PDR':'Laos','Brunei Darussalam':'Brunei','Republic of Korea':'South Korea','Korea, Rep.':'South Korea','Solomon Islands':'Solomon Is.'};
+/* approximate [lng,lat] of each country/area for the location marker */
+const CT_LATLNG={'Philippines':[122,12],'Micronesia, Fed. Sts.':[150.5,6.9],'Cambodia':[105,12.5],'Lao PDR':[103.8,18.2],'Papua New Guinea':[144,-6],'Vanuatu':[167,-16],'Solomon Islands':[160,-9.6],'Vietnam':[106,16],'Marshall Islands':[171,7.1],'Tonga':[-175.2,-21.2],'Malaysia':[102,3.8],'China':[104,35],'Indonesia':[118,-2.5],'Mongolia':[103,47],'Palau':[134.5,7.5],'Brunei Darussalam':[114.7,4.5],'Macao SAR, China':[113.55,22.2],'Hong Kong SAR, China':[114.18,22.3],'Japan':[138,37],'Cook Islands':[-159.8,-21.2],'New Zealand':[174,-41],'Australia':[134,-25],'Nauru':[166.9,-0.52],'Korea, Rep.':[127.8,36.4]};
+/* national name → facility-dataset name (formatting differences) */
+const CT_FACNAME={'Macao SAR, China':'Macao Sar, China','Hong Kong SAR, China':'Hong Kong'};
+function facKey(n){return CT_FACNAME[n]||n;}
+/* display label override (political-sensitivity naming) — does NOT change data keys */
+const CT_DISP={'Hong Kong SAR, China':'Hongkong SAR','Hong Kong':'Hongkong SAR','Macao SAR, China':'Macao SAR','Macao Sar, China':'Macao SAR'};
+function ctDisp(n){return CT_DISP[n]||n;}
+function natReadyFor(name){return NAT_READY.countries[name]||null;}
+function meanPct(vals){const xs=(vals||[]).filter(v=>v!=null&&!Number.isNaN(Number(v)));return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null;}
+/* resolve a country entry (national + facility availability) */
+function ctEntry(name){
+  const natC=CDATA.find(c=>c.name===name)||null;
+  const fname=natC?facKey(name):name;
+  const hasFac=!!(FAC.D&&FAC.D.summary[fname]);
+  const inc=natC?natC.inc:(FAC.D&&FAC.D.summary[name]?(FAC.D.summary[name].income==='HICs'?'HIC':'LMIC'):'');
+  const overall=natC?natC.overall:null;
+  return {name,natC,fname,hasFac,inc,overall};
+}
+function ctAllEntries(){
+  const arr=CDATA.map(c=>ctEntry(c.name));
+  if(FAC.D)Object.keys(FAC.D.summary).forEach(fn=>{if(!CDATA.some(c=>facKey(c.name)===fn))arr.push(ctEntry(fn));});
+  return arr;
+}
+function natHeadCol(p){return p>=60?'#0F7A5A':p>=30?'#D85A1A':'#C0392B';}
+function ctClassify(v){const isNA=x=>x===undefined||x===null||x===''||x==='N/A';return v==='Y'?'yes':v==='N'?'no':(v==='DK'||v==="Don't know")?'dk':isNA(v)?'na':'info';}
+const NAT_PCOL={yes:'#0F7A5A',info:'#0F7A5A',no:'#C0392B',dk:'#8C96A8',na:'#CBD5E1'};
+const NAT_PIC={yes:'Y',info:'i',no:'N',dk:'?',na:'-'};
+const NAT_PLBL={yes:'Yes',info:'Information available',no:'No',dk:"Don't know / no information",na:'N/A or no information'};
+function ctMethodValue(vals){const clean=vals.filter(v=>v&&v!=='N/A').map(v=>String(v).trim()).filter(Boolean);const unique=[...new Map(clean.map(v=>[v.toLowerCase(),v])).values()];return unique.length?unique.join(' / '):'N/A';}
+function ctDisplayVals(natC,sm){
+  if(sm.id==='s2'){const raw=natC.s2||{};const combined={'2.9':ctMethodValue([raw['2.9a'],raw['2.9b']])};return sm.keys.flatMap(k=>{if(k==='2.9a')return[{key:'2.9',raw:combined['2.9'],label:'Integrated surveillance programme / details'}];if(k==='2.9b')return[];return{key:k,raw:raw[k]||'N/A'};});}
+  if(sm.id!=='s4')return sm.keys.map(k=>({key:k,raw:natC[sm.id]?natC[sm.id][k]:'N/A'}));
+  const raw=natC.s4||{};const combined={'4.8':ctMethodValue([raw['4.8a'],raw['4.8b']]),'4.13':ctMethodValue([raw['4.13a'],raw['4.13b']])};
+  return sm.keys.flatMap(k=>{if(k==='4.8a')return[{key:'4.8',raw:combined['4.8'],label:'HCF reporting method:'}];if(k==='4.13a')return[{key:'4.13',raw:combined['4.13'],label:'Data integration method:'}];if(k==='4.8b'||k==='4.13b')return[];return{key:k,raw:raw[k]||'N/A'};});
+}
+function ctGetList(){
+  const q=(document.getElementById('ctSrch')||{value:''}).value.toLowerCase().trim();
+  let list=ctAllEntries();
+  if(CT_grp!=='ALL')list=list.filter(e=>e.inc===CT_grp);
+  if(q)list=list.filter(e=>e.name.toLowerCase().includes(q));
+  list.sort((a,b)=>ctDisp(a.name).localeCompare(ctDisp(b.name)));
+  return list;
+}
+function ctRenderSelect(){
+  const list=ctGetList();
+  if(!list.some(c=>c.name===CT_sel)&&list.length)CT_sel=list[0].name;
+  document.getElementById('ctSelDD').innerHTML=list.map(c=>`<option value="${esc(c.name)}" ${c.name===CT_sel?'selected':''}>${esc(ctDisp(c.name))}</option>`).join('');
+}
+function ctSetGrp(g,btn){CT_grp=g;document.querySelectorAll('#selbar .fpill').forEach(p=>p.classList.toggle('on',p.dataset.g===g));ctRenderSelect();ctRender();}
+function ctSelectChange(n){CT_sel=n;ctRender();}
+function ctApplyFilter(){ctRenderSelect();ctRender();}
+function ctStep(d){const list=ctGetList();const i=list.findIndex(c=>c.name===CT_sel);CT_sel=list[(i+d+list.length)%list.length].name;ctRenderSelect();ctRender();}
+function ctInit(){CT_sel='Vietnam';ctRenderSelect();if(!ctGetList().some(c=>c.name===CT_sel))CT_sel=ctGetList()[0]?.name||'';ctRenderSelect();ctRender();}
+function ctRenderHeadline(item){
+  const facS=item.hasFac?FAC.D.summary[item.fname]:null;
+  const natMean=meanPct(natReadyFor(item.name));
+  document.getElementById('ctHls').innerHTML=`
+    <div class="hl nat-hl"><div class="l">Nat. readiness</div><div class="v">${natMean!=null?natMean.toFixed(1)+'%':'N/A'}</div></div>
+    <div class="hl fac-hl"><div class="l">Facilities</div><div class="v">${facS?facS.total:'N/A'}</div></div>`;
+}
+function ctDestroyCharts(){
+  if(CT_natBar){CT_natBar.destroy();CT_natBar=null;}
+  if(CT_facBar){CT_facBar.destroy();CT_facBar=null;}
+}
+
+/* build HTML for Band 1 (national left col) */
+function ctNatBand1HTML(item){
+  const natC=item.natC;
+  const iso=CT_ISO[item.name]||'';
+  const geo=`<div class="nat-geo">
+      <div class="geo-card"><div class="geo-flag">${iso?`<img src="https://flagcdn.com/w320/${iso}.png" alt="Flag of ${esc(ctDisp(item.name))}" onerror="this.style.display='none'">`:'<div style="color:var(--muted);font-size:13px">Flag not available</div>'}</div><span class="lbl">${esc(ctDisp(item.name))}</span></div>
+      <div class="geo-card"><div class="geo-map" id="ct-natMap"></div><span class="lbl">Location &middot; WHO Western Pacific Region</span></div>
+    </div>`;
+  const ready=natReadyFor(item.name);
+  const readyMean=meanPct(ready);
+  const head=`<div class="col-head nat">National-level readiness<span class="s">${esc(ctDisp(item.name))} &middot; avg ${readyMean!=null?readyMean.toFixed(1)+'%':'N/A'}</span></div>`;
+  if(!natC){
+    return head+`<div class="sec-div nat">HAI Surveillance Readiness</div>
+      <div class="cd" style="padding:20px 16px;color:var(--muted);font-size:13px;text-align:center;line-height:1.5">National-level readiness data not available for <strong style="color:var(--navy)">${esc(ctDisp(item.name))}</strong>.<br>This country/area appears in the facility-level survey only.</div>
+      ${geo}`;
+  }
+  if(!ready){
+    return head+`<div class="sec-div nat">HAI Surveillance Readiness</div>
+      <div class="cd" style="padding:20px 16px;color:var(--muted);font-size:13px;text-align:center;line-height:1.5">Readiness totals from Tables 1-8 are not available for <strong style="color:var(--navy)">${esc(ctDisp(item.name))}</strong>.</div>
+      ${geo}`;
+  }
+  return head+`
+    <div class="sec-div nat">HAI Surveillance Readiness</div>
+    ${geo}`;
+}
+
+/* build HTML for Band 2 national (domain overview) */
+/* one national S-row cell (overview): tag + dots + y/tot */
+function ctNatOvCellInner(natC,sm,idx){
+  const items=ctDisplayVals(natC,sm).map(v=>({key:v.key,cls:ctClassify(v.raw),raw:v.raw,label:v.label||(IND_META[v.key]?IND_META[v.key].l:v.key)}));
+  const y=items.filter(v=>v.cls==='yes'||v.cls==='info').length;
+  const pct=natC[sm.id+'_pct']||0;
+  const boxes=items.map(v=>`<div class="ov-box" title="${esc(v.key+': '+v.label+' - '+NAT_PLBL[v.cls]+(v.cls==='info'?' ('+v.raw+')':''))}" style="background:${NAT_PCOL[v.cls]}">${esc(v.key)}</div>`).join('');
+  return `<div class="ovc-tag" title="${esc(sm.title)}">N${idx+1}</div><div class="ovc-dots">${boxes}</div><div class="ovc-yt" style="color:${natHeadCol(pct)}">${y}/${items.length}</div>`;
+}
+/* one facility T-row cell (overview): tag + chips */
+function ctFacOvCellInner(fname,t){
+  const chips=t.indicators.map(ind=>{const e=FAC.entryForCountry(t,fname,ind.key);const b=FAC.band(e?.pct);return `<span class="dom-chip ${b}" title="${esc(ind.code+' '+FAC.excelLabel(ind)+': '+FAC.raw(e))}">${ind.code}</span>`;}).join('');
+  return `<div class="ovc-tag" title="${esc(ctFacDisplayLabel(t.table_no))}">${esc(ctFacDisplayCode(t.table_no))}</div><div class="dom-chips" style="flex:1">${chips}</div>`;
+}
+/* Domain overview: national S-rows aligned with facility T-rows */
+function ctBand2HTML(item){
+  const natC=item.natC;
+  const maxN=Math.max(SECTION_META.length,CT_FAC_READY_TABLES.length);
+  const counts={yes:0,info:0,no:0,dk:0,na:0};
+  if(natC)SECTION_META.forEach(sm=>ctDisplayVals(natC,sm).forEach(v=>{const c=ctClassify(v.raw);if(counts[c]!==undefined)counts[c]++;}));
+  let rows='';
+  for(let i=0;i<maxN;i++){
+    const sm=SECTION_META[i];
+    const facT=item.hasFac?FAC.table(CT_FAC_READY_TABLES[i]):null;
+    rows+=`<div class="ovc nat">${(natC&&sm)?ctNatOvCellInner(natC,sm,i):'<div class="ovc-empty">&mdash;</div>'}</div>`;
+    rows+=`<div class="ovc fac">${facT?ctFacOvCellInner(item.fname,facT):'<div class="ovc-empty">&mdash;</div>'}</div>`;
+  }
+  return `<div class="ov-grid">
+    <div class="ovh nat">National &middot; readiness (N1&ndash;N8)<span class="ovh-leg"><span class="cp-stat"><span class="cp-stat-dot" style="background:#0F7A5A"></span>Yes ${counts.yes+counts.info}</span><span class="cp-stat"><span class="cp-stat-dot" style="background:#C0392B"></span>No ${counts.no}</span><span class="cp-stat"><span class="cp-stat-dot" style="background:#8C96A8"></span>DK ${counts.dk}</span><span class="cp-stat"><span class="cp-stat-dot" style="background:#CBD5E1"></span>N/A ${counts.na}</span></span></div>
+    <div class="ovh fac">Facility &middot; results (F1&ndash;F8)<span class="ovh-leg"><span class="leg-i"><span class="leg-dot" style="background:var(--green)"></span>75-100</span><span class="leg-i"><span class="leg-dot" style="background:#74C49A"></span>50-74</span><span class="leg-i"><span class="leg-dot" style="background:#64748B"></span>25-49</span><span class="leg-i"><span class="leg-dot" style="background:var(--red)"></span>0-24</span></span></div>
+    ${rows}
+  </div>`;
+}
+
+/* collapse/expand an Indicator Descriptions card (national or facility) */
+function toggleDesc(hdr){
+  const card=hdr.parentElement;const body=card.querySelector('.dbody,.fsbody');if(!body)return;
+  const open=body.style.display==='none';body.style.display=open?'block':'none';
+  const ic=hdr.querySelector('.desc-tog');if(ic)ic.textContent=open?'−':'+';
+}
+/* one national S detail card */
+function ctNatDetailCard(natC,sm,idx){
+  const ready=natReadyFor(natC.name);
+  const pct=ready&&ready[idx]!=null?ready[idx]:(natC[sm.id+'_pct']||0);
+  const head=natHeadCol(pct);
+  const rows=ctDisplayVals(natC,sm).map(v=>{
+    const cls=ctClassify(v.raw);const meta=IND_META[v.key];
+    const extra=cls==='info'?` <span style="font-size:10px;font-weight:700;color:#0F7A5A;background:#fff;border:1px solid rgba(15,122,90,.25);padding:1px 6px;border-radius:8px;margin-left:4px">${esc(v.raw)}</span>`:'';
+    return `<div class="n-irow"><div class="n-ibadge" style="background:${NAT_PCOL[cls]}">${NAT_PIC[cls]}</div><div class="n-ilbl"><span style="font-size:11px;font-weight:700;color:${NAT_PCOL[cls]}">${v.key}</span> <span style="font-size:13px">${esc(v.label||(meta?meta.l:v.key))}${extra}</span></div></div>`;
+  }).join('');
+  return `<div class="n-dcard"><div class="dh" onclick="toggleDesc(this)" style="cursor:pointer"><span class="dtag" style="background:${head}">N${idx+1}</span><span class="dnm">${esc(sm.title)}</span><span class="pc">${pct.toFixed(1)}%</span><span class="desc-tog">+</span></div><div class="dpbar"><i style="width:${pct}%;background:${head}"></i></div><div class="dbody" style="display:none">${rows}</div></div>`;
+}
+/* by-country facility detail: question/option labels reworded to national-style statements (display only, does NOT change source data) */
+const FAC_DETAIL_LABEL={
+'t1_i1':'Active functioning IPC programme in place at facility','t1_i2':'Appointed facility IPC lead/focal point','t1_i3':'Facility IPC lead/focal point working full-time','t1_i4':'Additional staff supporting the facility IPC lead/focal point','t1_i5':'Facility-level IPC committee actively supporting the IPC team','t1_i6':'Microbiology laboratory support present and delivering reliable results','t1_i7':'Microbiology laboratory support present but not delivering reliable results','t1_i8':'Microbiology laboratory performs pathogen identification','t1_i9':'Microbiology laboratory performs antimicrobial susceptibility testing of identified pathogens','t1_i10':'Dedicated budget allocated to the facility IPC programme',
+'t2_i1':'Active facility-level HAI surveillance programme in place','t2_i2':'HAI surveillance is a component of the facility IPC programme','t2_i3':'Designated facility HAI surveillance lead present (different from IPC national lead)','t2_i4':'Designated facility HAI surveillance lead present (same as IPC national lead)','t2_i5':'Facility HAI surveillance lead working full-time','t2_i6':'Facility HAI surveillance lead trained on HAI surveillance','t2_i7':'Facility has an HAI multidisciplinary group supporting HAI surveillance','t2_i8':'HAI surveillance fully and partially integrated with other facility surveillance programmes','t2_i9':'HAI surveillance fully integrated with other facility surveillance programmes','t2_i10':'HAI surveillance partially integrated with other facility surveillance programmes','t2_i11':'HAI surveillance not integrated with other facility surveillance programmes','t2_i12':'HAI surveillance integrated with facility AMR surveillance programme','t2_i13':'HAI surveillance integrated with facility emergency surveillance programme','t2_i14':'Laws or regulations mandating facility HAI surveillance in place','t2_i15':'Facility HAI surveillance programme has financial resources',
+'t3_i1':'Facility readiness to develop an HAI surveillance strategic plan','t3_i2':'Facility-level HAI surveillance strategic plan available','t3_i3':'Facility HAI surveillance strategic plan available and fully implemented','t3_i4':'Facility HAI surveillance strategic plan available and partially implemented','t3_i5':'Facility HAI surveillance strategic plan available but not implemented','t3_i6':'No facility HAI surveillance strategic plan in place','t3_i7':'Facility HAI surveillance plan includes antimicrobial resistant pathogens (AMR)','t3_i8':'Facility HAI surveillance plan includes pathogens prone to outbreaks (PPO)',
+'t4_i1':'Facility implements HAI surveillance','t4_i2':'Bloodstream infections (BSI) assessed under HAI surveillance','t4_i3':'Urinary tract infections (UTIs) assessed under HAI surveillance','t4_i4':'Surgical site infections (SSIs) assessed under HAI surveillance','t4_i5':'Pneumonia assessed under HAI surveillance','t4_i6':'Other infection types assessed under HAI surveillance','t4_i7':'Uses active versus passive HAI surveillance methods','t4_i8':'Uses hospital-wide versus focused HAI surveillance methods','t4_i9':'Uses incidence versus prevalence HAI surveillance methods','t4_i10':'Uses patient-based versus laboratory-based HAI surveillance methods',
+'t5_i1':'Facility-level readiness to develop/implement HAI surveillance data collection protocols','t5_i2':'Receives standardized HAI surveillance data collection protocol from the national level','t5_i3':'Has a written standardized HAI surveillance data collection protocol','t5_i4':'Collects HAI surveillance data','t5_i5':'National level advises the facility to report HAI surveillance data to them','t5_i6':'Has a mechanism to report HAI surveillance data to the national level','t5_i7':'Reports HAI surveillance data to the national level','t5_i8':'Reports HAI surveillance data to the national level electronically','t5_i9':'Reports HAI surveillance data to the national level manually / paper-based','t5_i10':'Facility-level readiness to check the quality of HAI surveillance data','t5_i11':'Has HAI surveillance data and checks its quality','t5_i12':'Has one database including HAI surveillance data','t5_i13':'Received training on HAI surveillance data collection methods from the national level',
+'t6_i1':'Facility readiness to analyze HAI surveillance data','t6_i2':'Facility analyzes HAI surveillance data','t6_i3':'Facility has identified HAI surveillance indicators','t6_i4':'Facility received training on HAI surveillance data analysis from the national level',
+'t7_i1':'Facility readiness to interpret HAI surveillance data','t7_i2':'Facility interprets its HAI surveillance data','t7_i3':'Facility received training on HAI surveillance data interpretation from the national level',
+'t8_i1':'Readiness to communicate/provide feedback of HAI surveillance data internally or externally','t8_i2':'Has HAI surveillance data and communicates/provides feedback of it','t8_i3':'Identified facility staff who should receive feedback on HAI surveillance findings','t8_i4':'Develops facility HAI reports summarizing HAI surveillance results','t8_i5':'Disseminates the HAI surveillance report','t8_i6':'Receives feedback/communication from the national level (e.g. HAI reports or findings)','t8_i7':'Received training on HAI surveillance communication/feedback',
+'t9_i1':'Readiness to conduct M&E of HAI surveillance','t9_i2':'Conducts regular M&E of HAI surveillance data','t9_i3':'HAI surveillance system evaluated in the past 3-5 years','t9_i4':'Received training on HAI surveillance monitoring and feedback from national level'
+};
+/* one facility T detail section */
+function ctFacDetailSec(fname,t){
+  const vals=t.indicators.map(ind=>FAC.entryForCountry(t,fname,ind.key)?.pct);
+  const m=FAC.avg(vals);
+  const rows=t.indicators.map(ind=>{
+    const e=FAC.entryForCountry(t,fname,ind.key);
+    const v=e?.pct;const barC=v==null?'#ADB5BD':(v>=75?'#0F7A5A':v>=50?'#74C49A':v>=25?'#64748B':'#C0392B');
+    return `<div class="fprow"><div class="fpl"><b>${ind.code}</b>${esc(FAC_DETAIL_LABEL[ind.key]||ind.label)}</div>
+      <div class="fpbar"><div class="fptr"><i style="width:${v==null?0:Math.max(0,Math.min(100,v))}%;background:${barC}"></i></div><span class="fpv" style="color:${barC}">${esc(FAC.raw(e))}</span></div></div>`;
+  }).join('');
+  return `<div class="fsec"><div class="fsh" onclick="toggleDesc(this)" style="cursor:pointer"><span class="nm">${esc(ctFacDisplayCode(t.table_no))} &middot; ${esc(ctFacDisplayLabel(t.table_no).replace(/^F\d+:\s*/,''))}</span><span style="display:flex;align-items:center;gap:10px"><span class="pc">${FAC.fmt(m)}</span><span class="desc-tog">+</span></span></div><div class="dpbar"><i style="width:${m==null?0:Math.max(0,Math.min(100,m))}%;background:#D85A1A"></i></div><div class="fsbody" style="display:none">${rows}</div></div>`;
+}
+/* Detail: national S cards aligned with facility T sections (row by row) */
+function ctBand3HTML(item){
+  const natC=item.natC;
+  const maxN=Math.max(SECTION_META.length,CT_FAC_READY_TABLES.length);
+  let rows='<div class="ovh nat">National &middot; indicator detail (N)</div><div class="ovh fac">Facility &middot; indicator detail (F)</div>';
+  for(let i=0;i<maxN;i++){
+    const sm=SECTION_META[i];
+    const t=item.hasFac?FAC.table(CT_FAC_READY_TABLES[i]):null;
+    rows+=`<div class="dt-cell">${(natC&&sm)?ctNatDetailCard(natC,sm,i):''}</div>`;
+    rows+=`<div class="dt-cell">${t?ctFacDetailSec(item.fname,t):''}</div>`;
+  }
+  return `<div class="dt-grid">${rows}</div>`;
+}
+
+/* build HTML for Band 1 facility col */
+function ctFacBand1HTML(item){
+  const head=`<div class="col-head fac">Facility-level results<span class="s">${esc(ctDisp(item.name))}</span></div>`;
+  if(!item.hasFac){
+    return head+`<div class="cd" style="padding:20px 16px;color:var(--muted);font-size:13px;text-align:center;line-height:1.5">Facility-level survey data not available for <strong style="color:var(--navy)">${esc(ctDisp(item.name))}</strong>.<br>This country/area is covered in the national-level assessment only.</div>`;
+  }
+  const fname=item.fname;
+  const s=FAC.D.summary[fname]||{};
+  const means=ctFacReadySeries(fname).filter(v=>v!=null&&!Number.isNaN(v));
+  const avgReady=means.length?(means.reduce((a,b)=>a+b,0)/means.length).toFixed(1):'N/A';
+  const readiness=ctFacReviewPanelHTML(fname);
+  return `<div class="col-head fac">Facility-level results<span class="s">${s.total||0} facilities &middot; avg ${avgReady}%</span></div>
+    <div class="fac-stats">
+      <div class="fstat fn"><span class="l">Facilities surveyed</span><span class="v">${s.total||0}</span></div>
+      <div class="fstat fb"><span class="l">Tertiary</span><span class="v">${s.tertiary||0}</span></div>
+      <div class="fstat fg"><span class="l">Secondary</span><span class="v">${s.secondary||0}</span></div>
+      <div class="fstat fo"><span class="l">Avg readiness</span><span class="v">${avgReady}%</span></div>
+    </div>
+    ${readiness}`;
+}
+
+function ctChartGridHTML(item){
+  const hasNat=!!natReadyFor(item.name);
+  const hasFac=!!item.hasFac;
+  const natSub=`${esc(ctDisp(item.name))} vs WPRO Average · N1-N8`;
+  const facSub=`${esc(ctDisp(item.name))} vs WPRO Average · F1-F8`;
+  const emptyNat='<div class="ct-empty-chart">National readiness totals from Tables 1-8 are not available for this country/area.</div>';
+  const emptyFac='<div class="ct-empty-chart">Facility-level survey data are not available for this country/area.</div>';
+  return `<div class="ct-chart-grid">
+    <div class="cd ct-chart-card nat"><div class="profile-chart-title">Bar Chart for HAI National-Level Readiness</div><div class="ct-chart-sub">${natSub}</div>${hasNat?'<div class="ct-chart-canvas bar"><canvas id="ct-natBar"></canvas></div>':emptyNat}</div>
+    <div class="cd ct-chart-card fac"><div class="profile-chart-title">Bar Chart for HAI Facility-Level Readiness</div><div class="ct-chart-sub">${facSub}</div>${hasFac?'<div class="ct-chart-canvas bar"><canvas id="ct-facBar"></canvas></div>':emptyFac}</div>
+  </div>`;
+}
+
+function ctBuildHTML(item){
+  return `<div class="parallel">
+    <div class="col">${ctNatBand1HTML(item)}</div>
+    <div class="col">${ctFacBand1HTML(item)}</div>
+  </div>
+  ${ctChartGridHTML(item)}
+  <div class="sec-div both" style="margin-top:16px">Indicator Descriptions</div>
+  ${ctBand3HTML(item)}`;
+}
+
+const CT_FAC_READY_TABLES=[1,2,3,5,6,7,8,9];
+const CT_FAC_READY_CODES={1:'F1',2:'F2',3:'F3',5:'F4',6:'F5',7:'F6',8:'F7',9:'F8'};
+const CT_FAC_READY_LABELS={
+  1:'F1: Facility-level IPC Programmes',
+  2:'F2: Facility-level HAI Surveillance Governance',
+  3:'F3: Facility-level HAI Surveillance Strategic Planning',
+  5:'F4: Facility-level HAI Surveillance Data Collection',
+  6:'F5: Facility-level HAI Surveillance Data Analysis',
+  7:'F6: Facility-level HAI Surveillance Data Interpretation',
+  8:'F7: Facility-level HAI Surveillance Data Communication/Feedback',
+  9:'F8: Facility-level HAI Surveillance Data M&E'
+};
+function ctFacDisplayCode(no){return CT_FAC_READY_CODES[no]||`F${no}`}
+function ctFacDisplayLabel(no){return CT_FAC_READY_LABELS[no]||`${ctFacDisplayCode(no)}: ${FAC.shortTitle(FAC.table(no)||{title:''})}`}
+function ctFacReadySeries(fname){
+  return CT_FAC_READY_TABLES.map(no=>{
+    const t=FAC.table(no);if(!t)return null;
+    return FAC.avg(t.indicators.map(ind=>FAC.entryForCountry(t,fname,ind.key)?.pct));
+  });
+}
+function ctFacWproSeries(){
+  return CT_FAC_READY_TABLES.map(no=>{
+    const t=FAC.table(no);if(!t)return null;
+    return FAC.avg(t.indicators.map(ind=>FAC.valueForLevel(t,'wpro',ind.key)?.pct));
+  });
+}
+function ctShortFacReadyLabel(no){
+  return ({1:'IPC programmes',2:'Governance',3:'Strategic planning',5:'Data collection',6:'Data analysis',7:'Interpretation',8:'Communication/feedback',9:'M&E'}[no])||ctFacDisplayCode(no);
+}
+function ctFacReviewPanelHTML(fname){
+  const values=ctFacReadySeries(fname);
+  const wpro=ctFacWproSeries();
+  const rows=CT_FAC_READY_TABLES.map((no,i)=>({no,label:CT_FAC_READY_LABELS[no],short:ctShortFacReadyLabel(no),v:values[i],w:wpro[i],gap:(wpro[i]??0)-(values[i]??0)})).filter(d=>d.v!=null&&!Number.isNaN(d.v));
+  if(!rows.length)return '<div class="top-empty-fill">Facility readiness summary is not available.</div>';
+  const strongest=rows.slice().sort((a,b)=>b.v-a.v)[0];
+  const priority=rows.slice().sort((a,b)=>a.v-b.v)[0];
+  const gap=rows.slice().sort((a,b)=>b.gap-a.gap)[0];
+  const gapText=gap.gap>0?`${gap.gap.toFixed(1)} pp below WPRO`:`${Math.abs(gap.gap).toFixed(1)} pp above WPRO`;
+  return `<div class="fac-review-panel">
+    <div class="fac-review-title">Facility readiness snapshot</div>
+    <div class="fac-review-grid">
+      <div class="fac-review-item"><div class="fac-review-label">Strongest domain</div><div class="fac-review-value">${strongest.v.toFixed(1)}%</div><div class="fac-review-desc">${esc(strongest.label)}</div></div>
+      <div class="fac-review-item"><div class="fac-review-label">Priority domain</div><div class="fac-review-value">${priority.v.toFixed(1)}%</div><div class="fac-review-desc">${esc(priority.label)}</div></div>
+      <div class="fac-review-item"><div class="fac-review-label">Largest WPRO gap</div><div class="fac-review-value">${gapText}</div><div class="fac-review-desc">${esc(gap.label)}</div></div>
+    </div>
+  </div>`;
+}
+
+function ctDrawCharts(item){
+  const ready=natReadyFor(item.name);
+  if(ready&&document.getElementById('ct-natBar')){
+    const labels=NAT_READY.shortLabels.map(l=>FAC.facWrapLabel(l,18));
+    const fullLabels=NAT_READY.labels;
+    const natBarVal=ctx=>Number(ctx?.dataset?.data?.[ctx.dataIndex]);
+    CT_natBar=new Chart(document.getElementById('ct-natBar'),{type:'bar',data:{labels,datasets:[
+      {label:ctDisp(item.name),data:ready,backgroundColor:'#0F7A5A',borderRadius:5,barPercentage:.7,categoryPercentage:.72},
+      {label:'WPRO Average',data:NAT_READY.wpro,backgroundColor:'#D85A1A',borderRadius:5,barPercentage:.7,categoryPercentage:.72}
+    ]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',layout:{padding:{right:innerWidth<600?16:36}},plugins:{legend:{display:true,position:'top',align:'end',labels:{font:{size:10,weight:'600'},usePointStyle:true,pointStyle:'rectRounded',boxWidth:11}},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex],label:ctx=>`${ctx.dataset.label}: ${Number(ctx.raw).toFixed(1)}%`}},datalabels:{display:ctx=>natBarVal(ctx)!=null,formatter:v=>Math.round(v)+'%',anchor:'end',align:ctx=>natBarVal(ctx)>=90?'left':'right',offset:3,clip:false,clamp:true,color:ctx=>natBarVal(ctx)>=90?'#fff':'#111827',font:{size:10,weight:'800'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'rgba(0,63,92,.12)'}},y:{ticks:{font:{size:9,weight:'700'},color:'#003F5C'},grid:{display:false}}}}});
+  }
+  if(!item.hasFac||!FAC.D)return;
+  const barLabels=CT_FAC_READY_TABLES.map(no=>FAC.facWrapLabel(CT_FAC_READY_LABELS[no],26));
+  const fullLabels=CT_FAC_READY_TABLES.map(no=>CT_FAC_READY_LABELS[no]);
+  const countryData=ctFacReadySeries(item.fname);
+  const wproData=ctFacWproSeries();
+  const barVal=ctx=>Number(ctx?.dataset?.data?.[ctx.dataIndex]);
+  CT_facBar=new Chart(document.getElementById('ct-facBar'),{type:'bar',data:{labels:barLabels,datasets:[{label:ctDisp(item.name),data:countryData,backgroundColor:'#0F7A5A',borderRadius:5,barPercentage:.62,categoryPercentage:.72},{label:'WPRO Average',data:wproData,backgroundColor:'#D85A1A',borderRadius:5,barPercentage:.62,categoryPercentage:.72}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',layout:{padding:{right:innerWidth<600?16:36,left:innerWidth<600?4:10}},plugins:{legend:{display:true,position:'top',align:'end',labels:{font:{size:10,weight:'600'},usePointStyle:true,pointStyle:'rectRounded',boxWidth:11}},tooltip:{callbacks:{title:items=>fullLabels[items[0].dataIndex]}},datalabels:{display:ctx=>barVal(ctx)!=null,formatter:v=>Math.round(v)+'%',anchor:'end',align:ctx=>barVal(ctx)>=90?'left':'right',offset:3,clip:false,clamp:true,color:ctx=>barVal(ctx)>=90?'#fff':'#111827',font:{size:10,weight:'800'}}},scales:{x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'rgba(0,63,92,.12)'}},y:{ticks:{autoSkip:false,font:{size:innerWidth<600?8:9,weight:'700'},color:'#003F5C',padding:8},grid:{display:false}}}}});
+}
+
+function ctDrawMap(name){
+  const box=document.getElementById('ct-natMap');if(!box||!window.d3)return;
+  function draw(world){
+    d3.select(box).select('svg').remove();
+    const W=box.clientWidth||280,H=box.clientHeight||168;
+    const svg=d3.select(box).append('svg').attr('viewBox',`0 0 ${W} ${H}`).style('background','#c8daea');
+    const proj=d3.geoEquirectangular().rotate([-160,0]).center([0,6]).scale(W*0.32).translate([W*0.5,H*0.5]).clipExtent([[0,0],[W,H]]);
+    const path=d3.geoPath(proj);
+    const ft=topojson.feature(world,world.objects.countries);
+    const target=CT_MAP[name]||name;
+    svg.selectAll('path').data(ft.features).join('path').attr('d',path).attr('fill',d=>d.properties.name===target?'#D85A1A':'#dce9f3').attr('stroke','#fff').attr('stroke-width',0.4);
+    // location marker — always shown (covers small islands/SARs missing from the 110m polygons)
+    const ll=CT_LATLNG[name];
+    let mk=null;
+    if(ll){const p=proj(ll);if(p&&!isNaN(p[0]))mk=p;}
+    if(!mk){const tf=ft.features.find(d=>d.properties.name===target);if(tf){const cen=path.centroid(tf);if(cen&&!isNaN(cen[0]))mk=cen;}}
+    if(mk){
+      svg.append('circle').attr('cx',mk[0]).attr('cy',mk[1]).attr('r',12).attr('fill','none').attr('stroke','#003F5C').attr('stroke-width',1.4).attr('opacity',.55);
+      svg.append('circle').attr('cx',mk[0]).attr('cy',mk[1]).attr('r',6).attr('fill','#D85A1A').attr('stroke','#fff').attr('stroke-width',1.6);
+    }
+  }
+  if(!__worldData&&window.__WORLD_TOPO__)__worldData=window.__WORLD_TOPO__;
+  if(__worldData)draw(__worldData);
+  else if(window.d3)d3.json('assets/vendor/countries-110m.json').then(w=>{__worldData=w;draw(w);}).catch(()=>{});
+}
+
+function ctRender(){
+  ctDestroyCharts();
+  const item=ctEntry(CT_sel);
+  ctRenderHeadline(item);
+  document.getElementById('ct-body').innerHTML=item.name?ctBuildHTML(item):'<p style="padding:24px;color:var(--muted)">Country not found</p>';
+  if(item.name){ctDrawCharts(item);ctDrawMap(item.name);}
+}
+/* ── TAB SWITCHER + INIT ── */
+let _ctInited=false,_incInited=false,_lvlInited=false;
+function sw(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('on');
+  btn.classList.add('on');
+  document.getElementById('selbar').style.display=(id==='ct'?'flex':'none');
+  if(id==='ct'&&!_ctInited){_ctInited=true;ctInit();}
+  if(id==='inc'&&!_incInited){_incInited=true;initInc();}
+  if(id==='lvl'&&!_lvlInited){_lvlInited=true;FAC.renderLevelControls();FAC.renderLevelTab();}
+  setTimeout(()=>{if(CT_natBar)CT_natBar.resize();if(CT_facBar)CT_facBar.resize();if(FAC.charts.radar)FAC.charts.radar.resize();},60);
+}
+/* run on load */
+initNatOverview();
+if(window.__HAI_FACILITY_DATA__){FAC.renderKPIs();FAC.renderRadar();FAC.renderHeatmap();}
+document.getElementById('selbar').style.display='none';
+</script>
+</body>
+</html>
